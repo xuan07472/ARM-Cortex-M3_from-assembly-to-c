@@ -4,8 +4,8 @@
 |---|---|
 |创建日期|2022-11-05|
 
-Gitee文档源码地址：[才鲸嵌入式 / ARM-Cortex-M3从汇编到C_从Boot到应用教程](https://gitee.com/langcai1943/ARM-Cortex-M3_from-assembly-to-c)  
-CSDN文章阅读地址：[]()  
+Gitee工程和源码地址：[才鲸嵌入式 / ARM-Cortex-M3从汇编到C_从Boot到应用教程](https://gitee.com/langcai1943/ARM-Cortex-M3_from-assembly-to-c)  
+CSDN文章阅读地址：[ARM Cortex-M3从汇编到C，从Boot到应用的教程](https://blog.csdn.net/qq582880551/article/details/127711475)  
 Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bilibili.com/106424039)  
 
 * 其它相关仓库文档：  
@@ -34,6 +34,20 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
 
 ### 2）M3介绍
 
+* M3由ARM公司于2004年推出，至今仍是很多单片机芯片使用的内核，如STM32F10x系列。
+* ST公司于2007年首次使用ARM公司的内核，产品是F1，随后凭借其简洁易用的软件开发包逐渐发展出著名的STM32系列，累计出货量近百亿颗。
+* M3属于ARMv7架构，ARMv7是ARM11之后的版本。
+* M3属于Cortex系列，该系列有三类：A、R和M，比如熟悉的Cortex-A9。
+* M3内核仅33000门。
+* M3不能使用ARM指令集，而是使用Thumb或Thumb-2指令集。
+* M3使用Cortex微控制器软件接口标准 (CMSIS)作为硬件抽象层。
+
+* *参考资料：*  
+
+[MCU缺货涨价后的国产化浪潮（三）：全球 MCU 市场高度集中，多因素共振加速国产替代](https://www.bilibili.com/read/cv13508527/) 文章里也列出了全球和国内的MCU厂商和所有嵌入式的行业。  
+[ARM CORTEX-M3简介](https://blog.csdn.net/changyourmind/article/details/51814844)  
+[ARM Cortex-M3](https://wenku.baidu.com/view/8fc3c75d312b3169a451a41d.html)
+[ARM发布适于高性能、低成本应用的Cortex-M3处理器](https://tech.hqew.com/xinpin_1765411)  
 
 ## 二、ARM-MDK IDE集成开发环境下载  
 * MDK-arm软件社区版官方介绍（无代码大小限制，不能用于商用，需要先获取社区版许可证，也就是在官网注册账号后再下载）：[MDK-社区版概述](https://www.keil.com/pr/article/1299.htm)  
@@ -45,19 +59,28 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
 
 ## 三、M3指令集和寄存器介绍
 
-###### **1.2.2 ARM核指令集**
+### 1）M3文档在线阅读及下载
 
-* ARM核各个系列的介绍详见 *参考网址：* [关于ARM的内核架构](https://www.cnblogs.com/zhugeanran/p/8431127.html)  
+* 芯片（IP核）手册 [ARM Cortex-M3 Processor Technical Reference Manual](https://developer.arm.com/documentation/100165/0201/)  
+* ARMv7-M指令集手册 [ARMv7-M Architecture Reference Manual](https://developer.arm.com/documentation/ddi0403/ee)  
+
+* 以上两个文档描述了M3内核的通用寄存器和指令集，其中：
+  * 芯片手册的“Table 3-1 Cortex-M3 instruction set summary”有所有指令的汇总表格，在线阅读地址在[Processor instructions](https://developer.arm.com/documentation/100165/0201/Programmers-Model/Instruction-set-summary/Processor-instructions)。
+  * 
+
+
+
+### 2）其它ARM核指令集介绍
 
 * ARM 可以用两套指令集：ARM指令集和Thumb指令集。  
-
-*参考网址：* [ARM汇编指令集汇总](https://blog.csdn.net/qq_40531974/article/details/83897559)  
-*参考网址：* [ARM指令集](https://blog.csdn.net/weixin_42110547/article/details/86672824)  
-*参考网址：* [关于ARM处理器指令集](https://blog.csdn.net/qq_45385706/article/details/108478867)  
-*参考网址：* [ARM指令集](https://www.diangon.com/m209371.html)  
-*参考网址：* [Arm Architecture Reference Manual for A-profile architecture](https://developer.arm.com/documentation/ddi0487/ha/?lang=en) 文档下载  
-
-* 有关ARM汇编的实际使用和编程技巧，详见**子文档**[《2.3.1.2_ARM编程.md》](documents/2.3.1.2_ARM编程.md)   
+* ARM核各个系列的介绍详见 ：  
+*参考网址：*  
+[关于ARM的内核架构](https://www.cnblogs.com/zhugeanran/p/8431127.html)  
+[ARM汇编指令集汇总](https://blog.csdn.net/qq_40531974/article/details/83897559)  
+[ARM指令集](https://blog.csdn.net/weixin_42110547/article/details/86672824)  
+[关于ARM处理器指令集](https://blog.csdn.net/qq_45385706/article/details/108478867)  
+[ARM指令集](https://www.diangon.com/m209371.html)  
+[Arm Architecture Reference Manual for A-profile architecture](https://developer.arm.com/documentation/ddi0487/ha/?lang=en) ARM官方可以下载文档  
 
 ## 四、软件工程及源码
 
@@ -205,3 +228,5 @@ __hardwareInit  PROC
 [【cm-3】汇编中的句子:AREA |.text|, CODE, READONLY, ALIGN=2详解](https://blog.csdn.net/dddxxxx/article/details/47129883)  
 [ARM汇编：汇编中proc、endp、ret、near、far指令用法](https://blog.csdn.net/weibo1230123/article/details/84235296)  
 [ARM Thumb指令集完整列表](https://blog.csdn.net/ASMARM/article/details/33306587)  
+
+### 2）正在进行中……
