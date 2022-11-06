@@ -3,4 +3,7 @@
 Listings/
 Objects/
 *.uvguix.*
-
+RTE_Components.h
+*.sct@*
+*.c@*
+EventRecorderStub.scvd

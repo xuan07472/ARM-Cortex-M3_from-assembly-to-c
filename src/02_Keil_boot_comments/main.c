@@ -32,7 +32,7 @@ int fputc(int ch, FILE *f)
 	UNUSED_VARIABLE(f);
 
 	if(DEMCR & TRCENA) {
-		while (ITM_PORT32(0) == 0);
+		while(ITM_PORT32(0) == 0);
 		ITM_PORT8(0) = (char)ch;
 	}
 	return ch;
