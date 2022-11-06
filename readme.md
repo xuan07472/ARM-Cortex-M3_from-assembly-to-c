@@ -14,6 +14,15 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
 
 ---
 
+|工程名称|作用|
+|---|---|
+|01_Hello_world|使用Keil的模拟器在虚拟终端输出Hello world|
+|02_Keil_boot_comments|Keil自带汇编boot的注释|
+|03_Self_boot|自行实现汇编boot|
+|...|...|
+
+---
+
 ## 一、前言
 
 ### 1）本仓库的目的
@@ -31,6 +40,7 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
 
 * 不适用本仓库的读者：
   * 想尽快用ARM芯片写出一个项目的（这时应该直接使用STM32，调用它丰富且使用简洁的库）。
+  * 不想使用模拟器，而是想直接使用一款硬件运行程序的。
 
 ### 2）M3介绍
 
@@ -40,7 +50,10 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
 * M3属于Cortex系列，该系列有三类：A、R和M，比如熟悉的Cortex-A9。
 * M3内核仅33000门。
 * M3不能使用ARM指令集，而是使用Thumb或Thumb-2指令集。
-* M3使用Cortex微控制器软件接口标准 (CMSIS)作为硬件抽象层。
+  * M3使用Cortex微控制器软件接口标准 (CMSIS)作为硬件抽象层。
+  * M3最大支持512M代码，512M SRAM，1G外部RAM，详见芯片文档的“3.4 Processor memory model”，芯片文档下载地址见本文档下面第三章。
+  * M3的R0~R15通用寄存器介绍详见芯片文档的“3.8 Processor core register summary”。
+  * M3的系统控制寄存器介绍详见芯片文档的“4.1 System control registers”，共有36个，如定时器、中断控制、系统状态、内存模式、指令集设置。
 
 * *参考资料：*  
 
@@ -49,13 +62,20 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
 [ARM Cortex-M3](https://wenku.baidu.com/view/8fc3c75d312b3169a451a41d.html)
 [ARM发布适于高性能、低成本应用的Cortex-M3处理器](https://tech.hqew.com/xinpin_1765411)  
 
+### 3）开发环境
+
+* 本仓库所有工程均在Keil下创建，并使用Keil的模拟器运行，不使用具体的硬件开发板。
+* 后续可能会在QEMU模拟器上运行。
+
 ## 二、ARM-MDK IDE集成开发环境下载  
 * MDK-arm软件社区版官方介绍（无代码大小限制，不能用于商用，需要先获取社区版许可证，也就是在官网注册账号后再下载）：[MDK-社区版概述](https://www.keil.com/pr/article/1299.htm)  
 * 获取社区版许可证：[Log in with your Arm or Mbed account](https://www.keil.arm.com/login/?next=%2Fmdk-community%2F)  
 * 下载地址主界面：[MDK Community Edition](https://www.keil.arm.com/mdk-community/)  
 * 下载地址举例：https://www.keil.com/fid/comahow53j1j1wriguw1y56me9lv1dgw3o3fd1/files/eval/mdk536.exe  
 * MKD-arm评估版软件官方下载地址（也就是不注册账号就下载，有32K代码限制）：[mdk536.exe](https://www.keil.com/fid/6upwf5w1y9wj1wt4huw1djsme93o1dgwmicqd1/files/eval/mdk536.exe)  
+* 安装的时候会自动下载各种芯片包。  
 * MKD里面没有硬件模拟器，可以直接运行和调试程序，你也可以编译完生成可执行程序后在QEMU软件里面仿真运行。  
+* Keil创建M3工程的流程可以网上自行搜索，创建时可以添加ARM官方提供的各个模块的代码，可以节省开发时间。
 
 ## 三、M3指令集和寄存器介绍
 
@@ -66,9 +86,7 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
 
 * 以上两个文档描述了M3内核的通用寄存器和指令集，其中：
   * 芯片手册的“Table 3-1 Cortex-M3 instruction set summary”有所有指令的汇总表格，在线阅读地址在[Processor instructions](https://developer.arm.com/documentation/100165/0201/Programmers-Model/Instruction-set-summary/Processor-instructions)。
-  * 
-
-
+  *  指令集汇总的本地**子文档**：[01_ARM Cortex-M3指令集汇总.md](./doc/01_ARM Cortex-M3指令集汇总.md)
 
 ### 2）其它ARM核指令集介绍
 
@@ -82,9 +100,34 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
 [ARM指令集](https://www.diangon.com/m209371.html)  
 [Arm Architecture Reference Manual for A-profile architecture](https://developer.arm.com/documentation/ddi0487/ha/?lang=en) ARM官方可以下载文档  
 
-## 四、软件工程及源码
+## 四、Keil汇编伪指令介绍
 
-### 1）M3 boot代码编写  
+* 详见本仓库中**子文档**：[02_Keil_MDK_ARM伪指令介绍.md](./doc/02_Keil_MDK_ARM伪指令介绍.md)  
+
+## 五、软件工程及源码
+
+### 1）01_Hello_world
+
+* 创建一个M3工程，使用Keil模拟器运行，在Keil软件的调试终端输出Hello world。
+* 创建工程的过程参考以下网址：
+  * [应用相关 新建一个基于ARM M3的工程](https://bbs.21ic.com/forum.php?mod=viewthread&tid=2818416) 选择CMSIS中的Core和Device中的Startup即可。
+  * [Error: L6218E: Undefined symbol Image$$ARM_LIB_STACK$$ZI$$Limit Not enough information to list image](https://blog.csdn.net/qq_41200467/article/details/124958685)
+  * 配置中的Debug页面勾选使用模拟器。
+* 进行printf输出重映射，将输出映射到Keil的Debug(printf) Viewer窗口
+  * [Keil Debug(printf) Viewer的使用](https://blog.csdn.net/mygod2008ok/article/details/105234076)
+  * [keil去除未使用的参数，变量，返回值的警告](https://blog.csdn.net/mygod2008ok/article/details/105234076)
+* 工程和源码在本文档同级目录\src\01_Hello_world\下
+* 第一打开工程时，需要自己点击软件上面窗口中带小串口的图标，打开Debug(printf) Viewer窗口
+
+### 2）02_Keil_boot_comments
+
+* 给Keil自带的汇编boot加上注释
+* 工程和源码在本文档同级目录\src\02_Keil_boot_comments\下
+
+### 3）M3 boot代码编写  
+
+* 不使用官方自带的汇编boot，自己写boot
+* 工程和源码在本文档同级目录\src\03_Self_boot\下
 
 ```asm
 ; 使用Keil自动生成时，也可用纯C写Boot相关的配置

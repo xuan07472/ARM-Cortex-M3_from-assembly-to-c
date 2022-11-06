@@ -1,3 +1,6 @@
 *.exe
 *.pdf
+Listings/
+Objects/
+*.uvguix.*
 
