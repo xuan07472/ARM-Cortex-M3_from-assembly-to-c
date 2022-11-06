@@ -118,11 +118,17 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
   * [keil去除未使用的参数，变量，返回值的警告](https://blog.csdn.net/mygod2008ok/article/details/105234076)
 * 工程和源码在本文档同级目录\src\01_Hello_world\下
 * 第一打开工程时，需要自己点击软件上面窗口中带小串口的图标，打开Debug(printf) Viewer窗口
+* 注意！文件使用了UTF-8编码，需要在Keil中进行设置才能正常显示中文，否则会显示乱码：Edit-->Configuation-->Encoding-->Encoding in UTF-8 without signature；因为GB2312在Git中会显示乱码，并且在Linux中使用GB2312会很不方便，从Linux和Windows中来回转时一不留神会用错误的编码报错导致中文丢失。
 
 ### 2）02_Keil_boot_comments
 
-* 给Keil自带的汇编boot加上注释
+* 给Keil自带的boot加上注释
 * 工程和源码在本文档同级目录\src\02_Keil_boot_comments\下
+  * Keil自带的boot代码的汇编底层在Keil自带的工具包中，看不到，只注释能看到的C代码部分
+  * Keil自带的boot代码的类汇编文件是.svt
+  * Keil自带的头文件也在自己的工具包中，不能更改
+  * 这个工程看不到boot的完整流程，下个工程会演示从第一行汇编代码引导到main.c的过程
+  * 注意：ARMCM3_ac6.sct文件的注释使用了GB2312编码，已经配置了UTF-8的Keil中直接打开会显示乱码，其它的文件都是UTF-8格式
 
 ### 3）M3 boot代码编写  
 

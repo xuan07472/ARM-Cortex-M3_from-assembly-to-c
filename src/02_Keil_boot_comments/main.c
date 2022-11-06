@@ -1,18 +1,8 @@
 /*******************************************************************************
- * \brief	使用Keil自带的boot代码创建默认工程，增加输出重定向，使用Keil模拟器
- *			运行，输出Hello world到调试终端中
+ * \brief	给Keil自带的boot加上注释
+ * \details	Keil自带的boot文件在./RTE/Device/ARMCM3/目录下
  * \author	将狼才鲸
  * \date	2022-11-06
- * \note	参考网址：
- *			* [应用相关 新建一个基于ARM M3的工程]
- *			  (https://bbs.21ic.com/forum.php?mod=viewthread&tid=2818416) 选择CMSIS中的Core和Device中的Startup即可。
- *			* [Error: L6218E: Undefined symbol Image$$ARM_LIB_STACK$$ZI$$Limit Not enough information to list image]
- *			  (https://blog.csdn.net/qq_41200467/article/details/124958685)
- *			* 配置中的Debug页面勾选使用模拟器。
- *			* [Keil Debug(printf) Viewer的使用]
- *			  (https://blog.csdn.net/mygod2008ok/article/details/105234076)
- *			* [keil去除未使用的参数，变量，返回值的警告]
- *			  (https://blog.csdn.net/mygod2008ok/article/details/105234076)
  ******************************************************************************/
 
 /************************************ 头文件 **********************************/

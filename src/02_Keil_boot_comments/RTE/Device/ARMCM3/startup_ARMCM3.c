@@ -1,3 +1,8 @@
+/*******************************************************************************
+ * \brief	复位中断，程序的第二行代码的入口；中断定义
+ * \note	File format: UTF-8
+ ******************************************************************************/
+
 /******************************************************************************
  * @file     startup_ARMCM3.c
  * @brief    CMSIS-Core(M) Device Startup File for a Cortex-M3 Device
@@ -23,7 +28,7 @@
  */
 
 #if defined (ARMCM3)
-  #include "ARMCM3.h"
+  #include "ARMCM3.h"	/** 中断号定义 */
 #else
   #error device not specified!
 #endif
@@ -38,13 +43,14 @@ extern __NO_RETURN void __PROGRAM_START(void);
 /*----------------------------------------------------------------------------
   Internal References
  *----------------------------------------------------------------------------*/
-__NO_RETURN void Reset_Handler  (void);
-            void Default_Handler(void);
+__NO_RETURN void Reset_Handler  (void);	/** 声明程序第二行代码跳转的函数，第一行汇编是跳转本身 */
+            void Default_Handler(void);	/** 系统崩溃时跳转到的函数 */
 
 /*----------------------------------------------------------------------------
   Exception / Interrupt Handler
  *----------------------------------------------------------------------------*/
 /* Exceptions */
+/** 中断函数声明 */
 void NMI_Handler            (void) __attribute__ ((weak, alias("Default_Handler")));
 void HardFault_Handler      (void) __attribute__ ((weak));
 void MemManage_Handler      (void) __attribute__ ((weak, alias("Default_Handler")));
@@ -71,11 +77,13 @@ void Interrupt9_Handler     (void) __attribute__ ((weak, alias("Default_Handler"
   Exception / Interrupt Vector table
  *----------------------------------------------------------------------------*/
 
+/** 同样的代码也可以在Linux gcc交叉编译工具环境中使用 */
 #if defined ( __GNUC__ )
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 #endif
 
+/** 中断向量表 */
 extern const VECTOR_TABLE_Type __VECTOR_TABLE[240];
        const VECTOR_TABLE_Type __VECTOR_TABLE[240] __VECTOR_TABLE_ATTRIBUTE = {
   (VECTOR_TABLE_Type)(&__INITIAL_SP),       /*     Initial Stack Pointer */
@@ -113,6 +121,7 @@ extern const VECTOR_TABLE_Type __VECTOR_TABLE[240];
 #pragma GCC diagnostic pop
 #endif
 
+/** 只实现了复位中断和异常中断，其它正常的外设中断需要用户自行实现 */
 /*----------------------------------------------------------------------------
   Reset Handler called on controller reset
  *----------------------------------------------------------------------------*/

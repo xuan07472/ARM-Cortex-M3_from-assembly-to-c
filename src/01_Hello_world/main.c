@@ -3,6 +3,7 @@
  *			运行，输出Hello world到调试终端中
  * \author	将狼才鲸
  * \date	2022-11-06
+ * \note	File format: UTF-8
  * \note	参考网址：
  *			* [应用相关 新建一个基于ARM M3的工程]
  *			  (https://bbs.21ic.com/forum.php?mod=viewthread&tid=2818416) 选择CMSIS中的Core和Device中的Startup即可。

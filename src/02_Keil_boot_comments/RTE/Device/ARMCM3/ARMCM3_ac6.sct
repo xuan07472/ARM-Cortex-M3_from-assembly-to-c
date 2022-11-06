@@ -1,5 +1,15 @@
 #! armclang -E --target=arm-arm-none-eabi -mcpu=cortex-m3 -xc
 ; command above MUST be in first line (no comment above!)
+;;
+; 定义编译器工具和编译选项，arm-arm-none-eabi这个名字很明显是Linux下gcc交叉编译工具
+; 的命名法
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; \brief	Keil自带的boot代码的地址定义，类汇编的文件，但既不是汇编也不是C语言
+; \author	注释作者：将狼才鲸
+; \date		2022-11-06
+; \note		File format: ANSI GB2312，必须使用这个，否则编译不过
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 /*
 ;-------- <<< Use Configuration Wizard in Context Menu >>> -------------------
@@ -11,6 +21,13 @@
 ;   <o1> Flash Size (in Bytes) <0x0-0xFFFFFFFF:8>
 ; </h>
  *----------------------------------------------------------------------------*/
+;;
+; \brief	ROM的地址范围，上电前存放代码和数据的地方，512K
+; \details	和别的编译器一样，这些配置相关的宏定义名字是定死的
+; \note		M3芯片手册《arm_cortexm3_processor_trm_100165_0201_02_en.pdf》中
+;			“3.4 Processor memory model”描述ROM代码段最大
+;			0x00000000 ~ 0x20000000，共512M
+;;
 #define __ROM_BASE      0x00000000
 #define __ROM_SIZE      0x00080000
 
@@ -20,6 +37,10 @@
 ;   <o1> RAM Size (in Bytes) <0x0-0xFFFFFFFF:8>
 ; </h>
  *----------------------------------------------------------------------------*/
+;;
+; \brief	内部SRAM的地址范围，256K
+; \note		M3芯片手册描述SRAM最大0x20000000 ~ 0x40000000，共512M
+;;
 #define __RAM_BASE      0x20000000
 #define __RAM_SIZE      0x00040000
 
@@ -29,6 +50,9 @@
 ;   <o1> Heap Size (in Bytes) <0x0-0xFFFFFFFF:8>
 ; </h>
  *----------------------------------------------------------------------------*/
+;;
+; \brief	M3堆栈大小，STACK栈512字节，HEAP堆3k
+;;
 #define __STACK_SIZE    0x00000200
 #define __HEAP_SIZE     0x00000C00
 
@@ -40,20 +64,35 @@
 /*----------------------------------------------------------------------------
   User Stack & Heap boundary definition
  *----------------------------------------------------------------------------*/
+; 栈顶 0x20000000 + 0x00040000
 #define __STACK_TOP    (__RAM_BASE + __RAM_SIZE)    /* starts at end of RAM */
+
+;;
+; \brief	堆8字节对齐
+; \details	内置函数AlignExpr可用于帮助您指定地址表达式
+; 			[KEIL的分散加载文件](https://blog.csdn.net/weixin_42892101/article/details/119856343)
+; 			和字节对齐的关键字ALIGN，ALIGNALL或FIXED的功能类似
+;;
 #define __HEAP_BASE    (AlignExpr(+0, 8))           /* starts after RW_RAM section, 8 byte aligned */
 
 
 /*----------------------------------------------------------------------------
   Scatter File Definitions definition
  *----------------------------------------------------------------------------*/
-#define __RO_BASE       __ROM_BASE
-#define __RO_SIZE       __ROM_SIZE
+#define __RO_BASE       __ROM_BASE	/* 0x00000000 */
+#define __RO_SIZE       __ROM_SIZE	/* 0x00080000 */
 
-#define __RW_BASE       __RAM_BASE
-#define __RW_SIZE      (__RAM_SIZE - __STACK_SIZE - __HEAP_SIZE)
+#define __RW_BASE       __RAM_BASE	/* 0x20000000 */
+#define __RW_SIZE      (__RAM_SIZE - __STACK_SIZE - __HEAP_SIZE)	/* 512k - 512字节 - 3K */
 
 
+;;
+; load_region_name (base_address | ("+" offset)) [attribute_list] [ max_size ]
+; load_region_name：下载区域名称，最大有效字符数31。
+; base_address：本区域内部目标被连接到的地址（按字对齐）。
+; +offset：相对前一个下载区域的偏移量（4的整数倍，如果为第一个区域）。
+; [ARM7中的sct](https://blog.csdn.net/L_thread/article/details/5962613)
+;;
 LR_ROM __RO_BASE __RO_SIZE  {                       ; load region size_region
   ER_ROM __RO_BASE __RO_SIZE  {                     ; load address = execution address
    *.o (RESET, +First)
