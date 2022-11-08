@@ -24,5 +24,24 @@
 |INCLUDE|包含头文件|INCLUDE conf.inc|
 |PRESERVE8|指定当前文件要求堆栈八字节对齐||
 |THUMB|使用THUMB指令集，不使用ARM指令集||
-|AREA|||
+|AREA|定义段|AREA .text, CODE, READONLY|
+|CODE|定义代码段||
+|READONLY|只读||
+|PROC|汇编函数|MyFunc PROC 指令|
+|ENDP|汇编函数结束|MyFunc PROC 指令 ENDP|
+|EXPORT|输出函数声明，然后该函数在别处可用|EXPORT MyFunc|
+|IMPORT|进行函数声明，可以使用其它文件的函数|EXPORT YourFunc|
+|ALIGN|取消字节对齐||
+|DCD|数据定义并分配存储单元||
+|EQU|宏定义|Size EQU 4|
+|MACRO|宏定义函数||
+|MEND|宏定义函数结束||
+|$|定义变量名|$Name|
+|STACK|定义栈|AREA	STACK, NOINIT, READWRITE, ALIGN=3|
+|NOINIT|内存不初始化||
+|READWRITE|可读可写||
+|SPACE|分配指定长度的一片连续的内存|SPACE 1024|
+|IF|判断||
+|ENDIF|IF结束||
+
 |...|...|...|

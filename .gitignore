@@ -7,3 +7,4 @@ RTE_Components.h
 *.sct@*
 *.c@*
 EventRecorderStub.scvd
+*.BAT
