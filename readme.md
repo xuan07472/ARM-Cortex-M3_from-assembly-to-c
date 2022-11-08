@@ -133,20 +133,21 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
 
 ### 3）03_Self_assembler_boot
 
-* 不使用官方自带的boot，自己用汇编写boot，并编写注释，看到系统启动过程中的每一步
+* 不使用官方自带的boot，自己用汇编写boot并引导C语言main()，成功打印输出，并编写注释，看到系统启动过程中的每一步。
 * 工程和源码在本文档同级目录\src\03_Self_assembler_boot\下
   * 创建工程时，只选择选择CMSIS中的Core，不选择Device中的Startup。
-  * 本工程使用Keil MDK ARM格式的汇编，而不是GNU格式的汇编。
-  * ARM格式的汇编使用armasm编译器，伪指令多为大写；GNU格式使用armclang 集成编译器，伪指令多为小写。
+  * ARM汇编的格式有两种：用Keil MDK ARM格式的汇编和GNU格式的汇编。
+  * ARM格式的汇编关键字多为大写，编译使用armasm编译器和armclang编译器都可以；GNU格式关键字多为小写，要使用armclang 集成编译器；ARM的编译工具套件当前版本为ARM Compiler Version 6。
+  * 我这里使用Keil MDK ARM格式的汇编，编译器让Keil自动识别文件自动选择，当前使用的是armclang。
   * Keil MDK ARM格式的汇编伪指令详见**子文档**[《02_Keil_ARM汇编伪指令.md》](./doc/02_Keil_ARM汇编伪指令.md)
-
+  
 * *参考网址：*  
   * [【方辉专栏】ARM嵌入式编译器（十） GNU 汇编和 armasm 汇编代码介绍](http://www.emdoor.cn/News/view/id/1732.html)
   * [零基础学ARM：MDK和GNU伪指令区别](https://www.elecfans.com/d/1434345.html)
   * [基于ARM编译器版本5的工程迁移与适配到ARM编译器版本6.12 后续1 - 汇编代码处理问题](https://blog.csdn.net/jackailson/article/details/103753951)
   * [从 Arm Compiler 5 迁移到 Arm Compiler 6](https://blog.csdn.net/zhzht19861011/article/details/109803651)
 
-* 实际工程中将汇编分成了好几个文件，下面列出的源码将汇编部分都放在一起，便于观看：
+* 实际工程中将汇编分成了好几个文件，下面列出的源码先将汇编部分都放在一起，便于观看，实际使用的文件在工程的源码中列出：
 
 ```asm
 ; 使用Keil自动生成时，也可用纯C写Boot相关的配置

@@ -34,10 +34,12 @@
 Reset_Handler	PROC
 				EXPORT	Reset_Handler	; 声明函数，声明后可以在别处调用
 				;IMPORT	__hw_init		; 声明硬件初始化函数
-				IMPORT	__main			; 声明c语言的main函数，c语言函数在汇编中会默认在前面加上两个下划线
+				;IMPORT	__main			; 声明c语言的main函数，ARM Compiler 5版本的编译器编译时，会在c语言函数前面加上两个下划线
+				IMPORT main				; 当前ARM Compiler 6汇编中直接调用C函数就可以了
 
-				;BL		__hw_init		; 调用硬件初始化的函数
-				BL		__main			; 跳转到C语言main()函数
+				;BL		__hw_init		; 如果有必要，调用硬件初始化的函数，如配置PLL之类的
+				;BL		__main			; 跳转到C语言main()函数
+				BL		main
 				BL		Cpu_Stall		; 如果main函数中不是死循环，函数退出了，则直接在这里死循环
 
 				ALIGN	; 取消8字节对齐，标号地址都是要4字节对齐的，否则程序会出错
