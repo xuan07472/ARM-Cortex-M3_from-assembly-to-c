@@ -1,1 +1,12 @@
 *.exe
+*.pdf
+Listings/
+Objects/
+*.uvguix.*
+RTE_Components.h
+*.sct@*
+*.c@*
+EventRecorderStub.scvd
+*.BAT
+RTE/
+
