@@ -15,9 +15,10 @@
  *			  (https://blog.csdn.net/qq_41200467/article/details/124958685)
  *			* 如何配置工程[µVision User's Guide - Debug (printf) Viewer]
  *			  (https://developer.arm.com/documentation/101407/0537/Debugging/Debug-Windows-and-Dialogs/Debug--printf--Viewer)
- * \warnning	Keil Debug(printf) Viewer获取单个字符时有个bug，第一次输入的值获取不到，以后每次获取到的字符都是你前一次按下
- *				的字符推测因为软件模拟的中断收发实际上都是用的键盘键值，一个键由好几个字符组成，Keil TIM工具再将键值转成
- *				ASCII的单个字符，中间有点bug；但是字符串输入是正常的，不会丢数据。
+ * \warning	Keil Debug(printf) Viewer获取单个字符时有个bug，第一次输入的值获取不到，
+ *			以后每次获取到的字符都是你前一次按下的字符，推测因为软件模拟的中断收发
+ *			实际上都是用的键盘键值，一个键由好几个字符组成，Keil TIM工具再将键值转成
+ *			ASCII的单个字符，中间有点bug；但是字符串输入是正常的，不会丢数据。
  ******************************************************************************/
 
 /********************************** 头文件 ************************************/
@@ -25,7 +26,7 @@
 
 /********************************** 宏定义 ************************************/
 //#define CHAR_LOOPBACK		/* 收到一个字符就返回一个字符 */
-#define STRING_LOOPBACK	/* 收到一行后再返回一行，如果接收buffer满则先返回整个buffer数据 */
+#define STRING_LOOPBACK	/* 收到一行后再返回一行，一行以回车结尾 */
 #define BUF_MAX_SIZE 256	/* 设置长一点，防止按回车键前数据溢出 */
 /* Keil使用自带的模拟器运行时，输入的换行是\r，但输出换行却是\r\n */
 #define FIX_KEIL_EMULATOR_AND_SSCOM32_UART_LINE_FEED_ISSUE

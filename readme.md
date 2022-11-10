@@ -20,7 +20,11 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
 |02_Keil_boot_comments|Keil自带汇编boot的注释|
 |03_Self_assembler_boot|自行实现汇编boot|
 |04_Uart_loopback|串口收发回环，使用Keil的虚拟终端窗口|
-|05_assembler_func|汇编函数的编写|
+|05_Assembler_func|汇编函数的编写|
+|06_Hardware_arch_code|将硬件相关的代码与系统逻辑代码分离|
+|07_OS_kernel|移植操作系统线程管理模块|
+|08_OS_memory|移植操作系统内存管理模块，实现malloc、free|
+|09_OS_filesystem|移植操作系统文件系统模块|
 |...|...|
 
 ---
@@ -306,23 +310,19 @@ __hardwareInit  PROC
   * 在网上还找到了使用ITM_CheckChar()和ITM_ReceiveChar()来实现fgetc，但需要需要添加core_cm3.h头文件和stm32f1xx.h头文件，而我直接使用的是M3核，并没有stm32的头文件，所以这个方法失败。
   * MDK的Debug (printf) Viewer窗口不像C51的UART #1窗口，UART #1在网上能很容易的找到教程，通过VSD虚拟串口软件，将Keil C51的调试串口和电脑的虚拟串口相绑定，这样就能使用SSCOM或者PUTTY等串口软件收发二进制数据了；Debug (printf) Viewer窗口我还没找到绑定的方法，所以当前scanf不能获取到16进制和int型的数据，只能获取到字符和字符串，但是这对使用模拟器仿真程序来说够用了。
 
-### 5）05_assembler_func
+### 5）05_Assembler_func
 
-* 汇编函数的编写。
-一些初始化内容：引脚配置，PLL配置，
-* 一些内容：
-压栈
-PUSH     {R0,R1,R2,R3,LR}
-弹栈
-POP      {R0,R1,R2,R3,LR}
-宏定义函数和R0做参数，置位和清位
-HWIO_WRITEB		io.inc
+* 如何写汇编函数，汇编宏定义函数
+* 工程和源码在本文档同级目录\src\05_Assembler_func\下
 
-### 6）
-* 系统必要的底层接口：
-  中断控制、时钟基准、大小端转换、系统退出、输入输出重映射、延时函数
+### 6）06_Hardware_arch_code
+* 将硬件arch和系统逻辑代码分离
+* 中断控制、时钟基准、大小端转换、系统退出、输入输出重映射、延时函数
+* 工程和源码在本文档同级目录\src\06_Hardware_arch_code\下
 
-### 7）
+### 7）07_OS_kernel
+
+* 工程和源码在本文档同级目录\src\07_OS_kernel\下
 
 * uCOS系统比较简单，配置没有图形界面或者字符界面，就是宏定义文件。
 * RT-Thread系统配置在Windows下有图形界面，在Linux有Linux内核同款的menuconfig字符配置界面，配完后会生成一个有宏定义的头文件。
@@ -337,3 +337,8 @@ HWIO_WRITEB		io.inc
 [使用eCos图形化配置工具管理eCos应用程序](https://blog.csdn.net/zoomdy/article/details/12908559)
 [uCOSII、eCos、FreeRTOS和djyos操作系统的特点及不足](https://www.elecfans.com/emb/20201001785961.html)
 [关于ucosII系统的软件系统裁剪性](https://www.cnblogs.com/bajiankeji/p/4966775.html)
+
+### 8）08_OS_memory
+* 工程和源码在本文档同级目录\src\08_OS_memory\下
+### 9）09_OS_filesystem
+* 工程和源码在本文档同级目录\src\09_OS_filesystem\下
