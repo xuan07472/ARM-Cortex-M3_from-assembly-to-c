@@ -19,7 +19,8 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
 |01_Hello_world|使用Keil的模拟器在虚拟终端输出Hello world|
 |02_Keil_boot_comments|Keil自带汇编boot的注释|
 |03_Self_assembler_boot|自行实现汇编boot|
-|04_Uart_loopback|串口收发回环|
+|04_Uart_loopback|串口收发回环，使用Keil的虚拟终端窗口|
+|05_assembler_func|汇编函数的编写|
 |...|...|
 
 ---
@@ -65,8 +66,9 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
 
 ### 3）开发环境
 
-* 本仓库所有工程均在Keil下创建，并使用Keil的模拟器运行，不使用具体的硬件开发板。
-* 后续可能会在QEMU模拟器上运行。
+* 本仓库所有工程均在Keil下创建，并使用Keil的模拟器运行，不使用具体的硬件开发板，Keil版本为MDK537.exe。
+* Keil使用模拟器的方法：Keil配置的Debug栏要选择Use Simulator，不选择默认的ULINK2/ME Cortex Debugger。
+* 如果有**报错**[Error: L6218E: Undefined symbol Image$$ARM_LIB_STACK$$ZI$$Limit Not enough information to list image](https://blog.csdn.net/qq_41200467/article/details/124958685)，则按网址中的描述配置一下链接器.sct文件路径。
 
 ## 二、ARM-MDK IDE集成开发环境下载  
 * MDK-arm软件社区版官方介绍（无代码大小限制，不能用于商用，需要先获取社区版许可证，也就是在官网注册账号后再下载）：[MDK-社区版概述](https://www.keil.com/pr/article/1299.htm)  
@@ -112,8 +114,8 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
 * 创建一个M3工程，使用Keil模拟器运行，在Keil软件的调试终端输出Hello world。
 * 创建工程的过程参考以下网址：
   * [应用相关 新建一个基于ARM M3的工程](https://bbs.21ic.com/forum.php?mod=viewthread&tid=2818416) 选择CMSIS中的Core和Device中的Startup即可。
-  * [Error: L6218E: Undefined symbol Image$$ARM_LIB_STACK$$ZI$$Limit Not enough information to list image](https://blog.csdn.net/qq_41200467/article/details/124958685)
-  * 配置中的Debug页面勾选使用模拟器。
+  * 如果有**报错**[Error: L6218E: Undefined symbol Image$$ARM_LIB_STACK$$ZI$$Limit Not enough information to list image](https://blog.csdn.net/qq_41200467/article/details/124958685)，则按网址中的描述配置一下链接器.sct文件路径。
+  * 配置中的Debug页面勾选使用模拟器，Keil配置的Debug栏要选择Use Simulator，不能选择默认的ULINK2/ME Cortex Debugger。
 * 进行printf输出重映射，将输出映射到Keil的Debug(printf) Viewer窗口
   * [Keil Debug(printf) Viewer的使用](https://blog.csdn.net/mygod2008ok/article/details/105234076)
   * [keil去除未使用的参数，变量，返回值的警告](https://blog.csdn.net/mygod2008ok/article/details/105234076)
@@ -294,6 +296,44 @@ __hardwareInit  PROC
 
 ### 4）04_Uart_loopback
 
-* 串口收发回环
+* 使用Keil模拟器和Debug (printf) Viewer窗口实现scanf输入，并进行串口收发回环。
+  * 工程和源码在本文档同级目录\src\04_Uart_loopback\下
+  * Keil配置的Debug栏要选择Use Simulator，不能选择默认的ULINK2/ME Cortex Debugger
+  * 创建工程方法：在Keil上新建一个工程，勾选CMSIS中的CORE，勾选Device中的Startup，一定要勾选Compiler--IO下的STDEER、STDIN、STDOUT，并将右侧的Breakpoint都改为ITM；不用重定向fgetc和fputc，直接使用scanf和printf即可。
+  * 如果有**报错**[Error: L6218E: Undefined symbol Image$$ARM_LIB_STACK$$ZI$$Limit Not enough information to list image](https://blog.csdn.net/qq_41200467/article/details/124958685)，则按网址中的描述配置一下链接器.sct文件路径。
+  * 在国内和国外的网站上都没找到介绍使用fgetc输入重定义，用scanf从Keil Debug (printf) Viewer窗口获取数据的方法，最终从Keil官网找到了。
+  * 这是有效的方法：[µVision User's Guide - Debug (printf) Viewer](https://developer.arm.com/documentation/101407/0537/Debugging/Debug-Windows-and-Dialogs/Debug--printf--Viewer)
+  * 在网上还找到了使用ITM_CheckChar()和ITM_ReceiveChar()来实现fgetc，但需要需要添加core_cm3.h头文件和stm32f1xx.h头文件，而我直接使用的是M3核，并没有stm32的头文件，所以这个方法失败。
+  * MDK的Debug (printf) Viewer窗口不像C51的UART #1窗口，UART #1在网上能很容易的找到教程，通过VSD虚拟串口软件，将Keil C51的调试串口和电脑的虚拟串口相绑定，这样就能使用SSCOM或者PUTTY等串口软件收发二进制数据了；Debug (printf) Viewer窗口我还没找到绑定的方法，所以当前scanf不能获取到16进制和int型的数据，只能获取到字符和字符串，但是这对使用模拟器仿真程序来说够用了。
 
-### 5）……
+### 5）05_assembler_func
+
+* 汇编函数的编写。
+一些初始化内容：引脚配置，PLL配置，
+* 一些内容：
+压栈
+PUSH     {R0,R1,R2,R3,LR}
+弹栈
+POP      {R0,R1,R2,R3,LR}
+宏定义函数和R0做参数，置位和清位
+HWIO_WRITEB		io.inc
+
+### 6）
+* 系统必要的底层接口：
+  中断控制、时钟基准、大小端转换、系统退出、输入输出重映射、延时函数
+
+### 7）
+
+* uCOS系统比较简单，配置没有图形界面或者字符界面，就是宏定义文件。
+* RT-Thread系统配置在Windows下有图形界面，在Linux有Linux内核同款的menuconfig字符配置界面，配完后会生成一个有宏定义的头文件。
+* 自己写操作系统时，也可以用menuconfig模块作为你的配置界面。
+* eCos有自己的图形配置界面。
+* Linux使用menuconfig字符配置界面。
+
+[嵌入式操作系统-ucos的移植（上）](https://zhuanlan.zhihu.com/p/385057352)
+[RT-Thread 之 PWM 设备驱动详细配置过程（血泪经验）](https://blog.csdn.net/hanhui22/article/details/107717884)
+[RTThread Studio开发STM32基本工程配置](https://blog.51cto.com/u_15060513/4039456)
+[rtthread 4.0 shell的裁剪](https://club.rt-thread.org/ask/question/da39bbf94abde0fe.html)
+[使用eCos图形化配置工具管理eCos应用程序](https://blog.csdn.net/zoomdy/article/details/12908559)
+[uCOSII、eCos、FreeRTOS和djyos操作系统的特点及不足](https://www.elecfans.com/emb/20201001785961.html)
+[关于ucosII系统的软件系统裁剪性](https://www.cnblogs.com/bajiankeji/p/4966775.html)
