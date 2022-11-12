@@ -116,9 +116,13 @@ $ tree
   * 阅读atomthreads\ports\cortex-m\README.md文档的后半部分，这里说了M3移植要注意的东西
   * 内核代码中只需要包含ports中硬件相关的一个atomport.h文件即可
   * 整个系统开始运行的文件是atomthreads\ports\cortex-m\tests-main.c
+  * kernel源码中使用了libopencm3的一些头文件和接口；LibOpenCM3 是GPL协议(LGPL3)的Cortex-M系列的封装库, 支持stm32、atmel、nxp系列单片机。这个固件库对标的是CMSIS，但是比CMSIS提供更多的方法接口，实现度介于CMSIS和SPL之间，需要将这些头文件和接口都改成CMSIS中的。
 
-3. 修改。。。
-
+3. 为了方便，我这里不使用Keil中提供的外设地址头文件，而直接使用libopencm3的；先下载libopencm3的代码[sunnybooy / libopencm3](https://gitee.com/sunnybooy/libopencm3)
+  * 然后在Linux下下载ARM交叉编译工具，指定芯片型号，编译，这样能生成对应的硬件寄存器地址头文件
+    * 编译过程[LibOpenCM3(一) Linux下命令行开发环境配置](https://www.cnblogs.com/milton/p/15917192.html)
+    * 我编译好的版本[才鲸嵌入式/98-7 libopencm3已经编译好的版本](https://gitee.com/langcai1943/libopencm3)
+  * 然后先在Keil中包含了atomthreads源码的工程，添加头文件包含路径，然后编译，查看缺哪些文件，然后将对应的文件拷贝到Keil工程中
 * *参考网址：*
   * 官方网址：[Atomthreads: Open Source RTOS](http://atomthreads.com/)
   * [stm8使用atomthreads项目](https://blog.csdn.net/yoeksome/article/details/51724778)

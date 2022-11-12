@@ -14,16 +14,16 @@
       <uAC6>1</uAC6>
       <TargetOption>
         <TargetCommonOption>
-          <Device>ARMCM3</Device>
-          <Vendor>ARM</Vendor>
-          <PackID>ARM.CMSIS.5.9.0</PackID>
+          <Device>STM32F103ZG</Device>
+          <Vendor>STMicroelectronics</Vendor>
+          <PackID>Keil.STM32F1xx_DFP.2.3.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
-          <Cpu>IRAM(0x20000000,0x00020000) IROM(0x00000000,0x00040000) CPUTYPE("Cortex-M3") CLOCK(12000000) ESEL ELITTLE</Cpu>
+          <Cpu>IRAM(0x20000000,0x00018000) IROM(0x08000000,0x00100000) CPUTYPE("Cortex-M3") CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
-          <FlashDriverDll>UL2CM3(-S0 -C0 -P0 -FD20000000 -FC1000)</FlashDriverDll>
+          <FlashDriverDll>UL2CM3(-S0 -C0 -P0 -FD20000000 -FC1000 -FN1 -FF0STM32F10x_1024 -FS08000000 -FL0100000 -FP0($$Device:STM32F103ZG$Flash\STM32F10x_1024.FLM))</FlashDriverDll>
           <DeviceId>0</DeviceId>
-          <RegisterFile>$$Device:ARMCM3$Device\ARM\ARMCM3\Include\ARMCM3.h</RegisterFile>
+          <RegisterFile>$$Device:STM32F103ZG$Device\Include\stm32f10x.h</RegisterFile>
           <MemoryEnv></MemoryEnv>
           <Cmp></Cmp>
           <Asm></Asm>
@@ -33,7 +33,7 @@
           <SLE66CMisc></SLE66CMisc>
           <SLE66AMisc></SLE66AMisc>
           <SLE66LinkerMisc></SLE66LinkerMisc>
-          <SFDFile></SFDFile>
+          <SFDFile>$$Device:STM32F103ZG$SVD\STM32F103xx.svd</SFDFile>
           <bCustSvd>0</bCustSvd>
           <UseEnv>0</UseEnv>
           <BinPath></BinPath>
@@ -110,13 +110,13 @@
         </CommonProperty>
         <DllOption>
           <SimDllName>SARMCM3.DLL</SimDllName>
-          <SimDllArguments>  -MPU</SimDllArguments>
-          <SimDlgDll>DCM.DLL</SimDlgDll>
+          <SimDllArguments> -REMAP -MPU</SimDllArguments>
+          <SimDlgDll>DARMSTM.DLL</SimDlgDll>
           <SimDlgDllArguments>-pCM3</SimDlgDllArguments>
           <TargetDllName>SARMCM3.DLL</TargetDllName>
           <TargetDllArguments> -MPU</TargetDllArguments>
-          <TargetDlgDll>TCM.DLL</TargetDlgDll>
-          <TargetDlgDllArguments>-pCM3</TargetDlgDllArguments>
+          <TargetDlgDll>DARMSTM.DLL</TargetDlgDll>
+          <TargetDlgDllArguments>-pSTM32F103ZG</TargetDlgDllArguments>
         </DllOption>
         <DebugOption>
           <OPTHX>
@@ -134,11 +134,11 @@
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
             <Capability>1</Capability>
-            <DriverSelection>-1</DriverSelection>
+            <DriverSelection>4096</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -191,7 +191,7 @@
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
             <useUlib>0</useUlib>
-            <EndSel>1</EndSel>
+            <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
             <nSecure>0</nSecure>
             <RoSelD>3</RoSelD>
@@ -247,12 +247,12 @@
               <IRAM>
                 <Type>0</Type>
                 <StartAddress>0x20000000</StartAddress>
-                <Size>0x20000</Size>
+                <Size>0x18000</Size>
               </IRAM>
               <IROM>
                 <Type>1</Type>
-                <StartAddress>0x0</StartAddress>
-                <Size>0x40000</Size>
+                <StartAddress>0x8000000</StartAddress>
+                <Size>0x100000</Size>
               </IROM>
               <XRAM>
                 <Type>0</Type>
@@ -276,8 +276,8 @@
               </OCR_RVCT3>
               <OCR_RVCT4>
                 <Type>1</Type>
-                <StartAddress>0x0</StartAddress>
-                <Size>0x40000</Size>
+                <StartAddress>0x8000000</StartAddress>
+                <Size>0x100000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -302,7 +302,7 @@
               <OCR_RVCT9>
                 <Type>0</Type>
                 <StartAddress>0x20000000</StartAddress>
-                <Size>0x20000</Size>
+                <Size>0x18000</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
@@ -329,7 +329,7 @@
             <uC99>1</uC99>
             <uGnu>1</uGnu>
             <useXO>0</useXO>
-            <v6Lang>1</v6Lang>
+            <v6Lang>3</v6Lang>
             <v6LangP>1</v6LangP>
             <vShortEn>1</vShortEn>
             <vShortWch>1</vShortWch>
@@ -337,10 +337,10 @@
             <v6WtE>0</v6WtE>
             <v6Rtti>0</v6Rtti>
             <VariousControls>
-              <MiscControls></MiscControls>
-              <Define></Define>
+              <MiscControls>-Wno-cast-qual -Wno-missing-prototypes -Wno-unreachable-code-return -Wno-pointer-arith -Wno-missing-variable-declarations -Wno-padded -Wno-implicit-function-declaration -Wno-implicit-int-conversion -Wno-sign-conversion -Wno-self-assign -Wno-missing-noreturn -Wno-comment</MiscControls>
+              <Define>STM32F1 STD_CON=USART2 MST_SIZE=0x400</Define>
               <Undefine></Undefine>
-              <IncludePath></IncludePath>
+              <IncludePath>.\src\kernel;.\src\ports\cortex-m;.\src\libopencm3\include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -362,16 +362,16 @@
             </VariousControls>
           </Aads>
           <LDads>
-            <umfTarg>0</umfTarg>
+            <umfTarg>1</umfTarg>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
             <noStLib>0</noStLib>
             <RepFail>1</RepFail>
             <useFile>0</useFile>
-            <TextAddressRange>0x00000000</TextAddressRange>
+            <TextAddressRange>0x08000000</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
             <pXoBase></pXoBase>
-            <ScatterFile>.\RTE\Device\ARMCM3\ARMCM3_ac6.sct</ScatterFile>
+            <ScatterFile></ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
             <Misc></Misc>
@@ -382,17 +382,144 @@
       </TargetOption>
       <Groups>
         <Group>
-          <GroupName>usr</GroupName>
+          <GroupName>kernel</GroupName>
           <Files>
             <File>
-              <FileName>main.c</FileName>
+              <FileName>atomkernel.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\src\usr\main.c</FilePath>
+              <FilePath>.\src\kernel\atomkernel.c</FilePath>
+            </File>
+            <File>
+              <FileName>atommutex.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\kernel\atommutex.c</FilePath>
+            </File>
+            <File>
+              <FileName>atomqueue.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\kernel\atomqueue.c</FilePath>
+            </File>
+            <File>
+              <FileName>atomsem.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\kernel\atomsem.c</FilePath>
+            </File>
+            <File>
+              <FileName>atomtimer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\kernel\atomtimer.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>os</GroupName>
+          <GroupName>ports</GroupName>
+          <Files>
+            <File>
+              <FileName>atomport.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\ports\cortex-m\atomport.c</FilePath>
+            </File>
+            <File>
+              <FileName>atomport-asm.S</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\src\ports\cortex-m\atomport-asm.S</FilePath>
+            </File>
+            <File>
+              <FileName>helloworld.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\ports\cortex-m\common\helloworld.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32_con.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\ports\cortex-m\common\stm32_con.c</FilePath>
+            </File>
+            <File>
+              <FileName>stubs.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\ports\cortex-m\common\stubs.c</FilePath>
+            </File>
+            <File>
+              <FileName>board_setup.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\ports\cortex-m\boards\nucleo-f103rb\board_setup.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>libopencm3</GroupName>
+          <Files>
+            <File>
+              <FileName>nvic.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\libopencm3\lib\cm3\nvic.c</FilePath>
+            </File>
+            <File>
+              <FileName>systick.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\libopencm3\lib\cm3\systick.c</FilePath>
+            </File>
+            <File>
+              <FileName>vector.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\libopencm3\lib\cm3\vector.c</FilePath>
+            </File>
+            <File>
+              <FileName>gpio_common_all.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\libopencm3\lib\stm32\common\gpio_common_all.c</FilePath>
+            </File>
+            <File>
+              <FileName>rcc_common_all.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\libopencm3\lib\stm32\common\rcc_common_all.c</FilePath>
+            </File>
+            <File>
+              <FileName>usart_common_all.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\libopencm3\lib\stm32\common\usart_common_all.c</FilePath>
+            </File>
+            <File>
+              <FileName>vector_chipset.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\libopencm3\lib\dispatch\vector_chipset.c</FilePath>
+            </File>
+            <File>
+              <FileName>vector_nvic.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\libopencm3\lib\dispatch\vector_nvic.c</FilePath>
+            </File>
+            <File>
+              <FileName>f1_vector_nvic.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\libopencm3\lib\stm32\f1\f1_vector_nvic.c</FilePath>
+            </File>
+            <File>
+              <FileName>usart_common_f124.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\libopencm3\lib\stm32\common\usart_common_f124.c</FilePath>
+            </File>
+            <File>
+              <FileName>f1_rcc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\libopencm3\lib\stm32\f1\f1_rcc.c</FilePath>
+            </File>
+            <File>
+              <FileName>f1_gpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\libopencm3\lib\stm32\f1\f1_gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>flash_common_all.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\libopencm3\lib\stm32\common\flash_common_all.c</FilePath>
+            </File>
+            <File>
+              <FileName>assert.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\libopencm3\lib\cm3\assert.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>::CMSIS</GroupName>
@@ -416,12 +543,6 @@
           <targetInfo name="OS_kernel"/>
         </targetInfos>
       </component>
-      <component Cclass="Device" Cgroup="Startup" Cvariant="C Startup" Cvendor="ARM" Cversion="2.0.3" condition="ARMCM3 CMSIS">
-        <package name="CMSIS" schemaVersion="1.7.7" url="http://www.keil.com/pack/" vendor="ARM" version="5.9.0"/>
-        <targetInfos>
-          <targetInfo name="OS_kernel"/>
-        </targetInfos>
-      </component>
       <component Cbundle="ARM Compiler" Cclass="Compiler" Cgroup="I/O" Csub="STDERR" Cvariant="ITM" Cvendor="Keil" Cversion="1.2.0" condition="ARMCC Cortex-M with ITM">
         <package name="ARM_Compiler" schemaVersion="1.7.7" url="https://www.keil.com/pack/" vendor="Keil" version="1.7.2"/>
         <targetInfos>
@@ -440,34 +561,34 @@
           <targetInfo name="OS_kernel"/>
         </targetInfos>
       </component>
+      <component Cclass="Device" Cgroup="Startup" Cvendor="Keil" Cversion="1.0.0" condition="STM32F1xx CMSIS">
+        <package name="STM32F1xx_DFP" schemaVersion="1.4.0" url="http://www.keil.com/pack/" vendor="Keil" version="2.3.0"/>
+        <targetInfos>
+          <targetInfo name="OS_kernel"/>
+        </targetInfos>
+      </component>
     </components>
     <files>
-      <file attr="config" category="linkerScript" condition="ARMCC5" name="Device\ARM\ARMCM3\Source\ARM\ARMCM3_ac5.sct" version="1.0.0">
-        <instance index="0" removed="1">RTE\Device\ARMCM3\ARMCM3_ac5.sct</instance>
-        <component Cclass="Device" Cgroup="Startup" Cvariant="C Startup" Cvendor="ARM" Cversion="2.0.3" condition="ARMCM3 CMSIS" isDefaultVariant="1"/>
-        <package name="CMSIS" schemaVersion="1.7.7" url="http://www.keil.com/pack/" vendor="ARM" version="5.9.0"/>
-        <targetInfos/>
-      </file>
-      <file attr="config" category="linkerScript" condition="ARMCC6" name="Device\ARM\ARMCM3\Source\ARM\ARMCM3_ac6.sct" version="1.0.0">
-        <instance index="0">RTE\Device\ARMCM3\ARMCM3_ac6.sct</instance>
-        <component Cclass="Device" Cgroup="Startup" Cvariant="C Startup" Cvendor="ARM" Cversion="2.0.3" condition="ARMCM3 CMSIS" isDefaultVariant="1"/>
-        <package name="CMSIS" schemaVersion="1.7.7" url="http://www.keil.com/pack/" vendor="ARM" version="5.9.0"/>
+      <file attr="config" category="header" name="RTE_Driver\Config\RTE_Device.h" version="1.1.2">
+        <instance index="0">RTE\Device\STM32F103ZG\RTE_Device.h</instance>
+        <component Cclass="Device" Cgroup="Startup" Cvendor="Keil" Cversion="1.0.0" condition="STM32F1xx CMSIS"/>
+        <package name="STM32F1xx_DFP" schemaVersion="1.4.0" url="http://www.keil.com/pack/" vendor="Keil" version="2.3.0"/>
         <targetInfos>
           <targetInfo name="OS_kernel"/>
         </targetInfos>
       </file>
-      <file attr="config" category="sourceC" name="Device\ARM\ARMCM3\Source\startup_ARMCM3.c" version="2.0.3">
-        <instance index="0">RTE\Device\ARMCM3\startup_ARMCM3.c</instance>
-        <component Cclass="Device" Cgroup="Startup" Cvariant="C Startup" Cvendor="ARM" Cversion="2.0.3" condition="ARMCM3 CMSIS" isDefaultVariant="1"/>
-        <package name="CMSIS" schemaVersion="1.7.7" url="http://www.keil.com/pack/" vendor="ARM" version="5.9.0"/>
+      <file attr="config" category="source" condition="STM32F1xx XL ARMCC" name="Device\Source\ARM\startup_stm32f10x_xl.s" version="1.0.0">
+        <instance index="0">RTE\Device\STM32F103ZG\startup_stm32f10x_xl.s</instance>
+        <component Cclass="Device" Cgroup="Startup" Cvendor="Keil" Cversion="1.0.0" condition="STM32F1xx CMSIS"/>
+        <package name="STM32F1xx_DFP" schemaVersion="1.4.0" url="http://www.keil.com/pack/" vendor="Keil" version="2.3.0"/>
         <targetInfos>
           <targetInfo name="OS_kernel"/>
         </targetInfos>
       </file>
-      <file attr="config" category="sourceC" name="Device\ARM\ARMCM3\Source\system_ARMCM3.c" version="1.0.1">
-        <instance index="0">RTE\Device\ARMCM3\system_ARMCM3.c</instance>
-        <component Cclass="Device" Cgroup="Startup" Cvariant="C Startup" Cvendor="ARM" Cversion="2.0.3" condition="ARMCM3 CMSIS" isDefaultVariant="1"/>
-        <package name="CMSIS" schemaVersion="1.7.7" url="http://www.keil.com/pack/" vendor="ARM" version="5.9.0"/>
+      <file attr="config" category="source" name="Device\Source\system_stm32f10x.c" version="1.0.0">
+        <instance index="0">RTE\Device\STM32F103ZG\system_stm32f10x.c</instance>
+        <component Cclass="Device" Cgroup="Startup" Cvendor="Keil" Cversion="1.0.0" condition="STM32F1xx CMSIS"/>
+        <package name="STM32F1xx_DFP" schemaVersion="1.4.0" url="http://www.keil.com/pack/" vendor="Keil" version="2.3.0"/>
         <targetInfos>
           <targetInfo name="OS_kernel"/>
         </targetInfos>

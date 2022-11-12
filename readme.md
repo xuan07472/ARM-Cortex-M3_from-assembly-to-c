@@ -21,8 +21,8 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
 |03_Self_assembler_boot|自行实现汇编boot|
 |04_Uart_loopback|串口收发回环，使用Keil的虚拟终端窗口|
 |05_Assembler_func|汇编函数的编写|
-|06_Hardware_arch_code|将硬件相关的代码与系统逻辑代码分离|
-|07_OS_kernel|移植操作系统线程管理模块|
+|~~06_Hardware_arch_code~~|~~将硬件相关的代码与系统逻辑代码分离~~|
+|~~07_OS_kernel~~|~~移植操作系统线程管理模块~~|
 |08_OS_memory|移植操作系统内存管理模块，实现malloc、free|
 |09_OS_filesystem|移植操作系统文件系统模块|
 |...|...|
@@ -318,6 +318,9 @@ __hardwareInit  PROC
 * 工程和源码在本文档同级目录\src\05_Assembler_func\下
 
 ### 6）06_Hardware_arch_code
+
+* ==》该工程内容未编写，工程里只有没有的文件…………《==
+
 * 将硬件arch和系统逻辑代码分离
 * 仿照Linux kernel的文件结构，将系统底层硬件相关的文件独立出来，让后将相关代码放在名为arch的文件夹中
 * 实现通用的操作系统底层硬件相关的接口，如中断控制、时钟基准、大小端转换、系统退出、输入输出重映射、延时函数
@@ -328,15 +331,17 @@ __hardwareInit  PROC
   * 2. Windows下下载后解压会报错，Git clone后checkout .检出文件也会报错，因为有三个文件名aux.c和aux.h和Windows预留文件名重合，Windows只允许自己使用：'drivers/gpu/drm/nouveau/nvkm/subdev/i2c/aux.c'， 'drivers/gpu/drm/nouveau/nvkm/subdev/i2c/aux.h'，'include/soc/arc/aux.h'，类似的文件名还有COM1到COM9，LPT1到LPT9；可以将kernel仓库在Windows上下载或者clone后拷贝到Linux系统如Ubuntu中，然后checkout或者解压，然后切换到发布版本版本，git checkout 然后将上述三个文件重命名或者删除，将.git隐藏文件删除，然后拷贝回Windows系统，便于查看代码。
   * 如果你只是查看kernel代码，则可以删除.git文件夹，arch/下除了arm的其它文件夹，arch/arm/下match-开头的文件夹只保留一个你熟悉的板子型号，如match-stm32，这样创建工程后查看代码跳转时更方便。
 
-* 该工程内容暂未编写，先进行07_OS_kernel case…………
-
 ### 7）07_OS_kernel
+
+* ==》该工程内容未实现，工程编译不过…………《==
+  * Atomthreads M3硬件相关的代码原本是适配Linux下的，移植到Keil中比较麻烦，已放弃
 
 * 嵌入式常见的RTOS有好几个，很多都是线程管理、内存管理、驱动框架、文件系统框架等操作元素合在一起的，移植起来复杂一点，我需要更简单的演示；所以我这里选用Atomthreads，它纯粹就只有一个OS中的进程管理模块，总共也只有6个.c文件，内容简单，便于理解；可以熟悉移植线程管理模块需要修改哪些硬件相关的代码；它也可以移植到8位CPU上面。
   * 官方网址：[Atomthreads: Open Source RTOS](http://atomthreads.com/)
 
 * 工程和源码在本文档同级目录\src\07_OS_kernel\下
 * 更多的移植流程详见**子文档**[《03_ARM Cortex-M3 Atomthreads操作系统内核移植过程.md》](./doc/03_ARM Cortex-M3 Atomthreads操作系统内核移植过程.md)
+* Keil模拟器的介绍详见**子文档**[《04_Keil模拟器介绍.md》](./doc/04_Keil模拟器介绍.md)
 
 * 其它几个操作系统移植时需要的配置操作：
   * uCOS系统比较简单，配置没有图形界面或者字符界面，就是宏定义文件。
@@ -355,6 +360,18 @@ __hardwareInit  PROC
 [关于ucosII系统的软件系统裁剪性](https://www.cnblogs.com/bajiankeji/p/4966775.html)  
 [FreeRTOS（1）---FreeRTOS 内核配置说明](https://blog.csdn.net/qq_27114397/article/details/82996622)  
 
+* Keil选择设备时，不能再选择ARM中的Cortex-M3，而要选择一款实际的芯片了，因为这样才能使用中断和定时器的头文件定义；我这里选用STM32F103ZG
+  * 首先点击软件上面绿色和黄色方框的按钮，需要先在Keil中的Pack Installer窗口中左侧选中STMicroelectronics--STM32F1 Series--STM32F103--STM32F103ZG，再在右侧安装STM32F1xx_DFP；如果软件下载速度很慢，可以自行去网上下载keil.STM32F1xx_DFP.2.4.0.pack；一个很快的下载地址是[Keil.STM32F1xx_DFP.2.3.0.pack (47.84MB)](https://download.armfly.com/armbbs/bbs/96992/Keil.STM32F1xx_DFP.2.3.0.pack)
+  * [MDK5.29，5.30，5.31，5.32，5.33, 5.34，5.35, 5.36, 5.37和各种pack软件包镜像下载（2022-05-04）](https://blog.csdn.net/Simon223/article/details/105090189)
+  * 右侧还自带了TencentOS，RT-Thread，FreeRTOS操作系统，可以开盒即用，很方便；因为我这里是演示操作系统移植的原理，所以不使用这些现成的。
+
+* 在软件配置的Debug页面，选择模拟器Use Simulator，并且将Cortex-M3的模拟器库改成STM32F1xx的；将DCM.DLL和-pCM3改为DARMSTM.DLL和-pSTM32F103ZG
+
+* *遇到的问题及解决办法*
+  * [Keil环境配置及stm32程序的仿真调试](https://blog.csdn.net/qq_41675500/article/details/120517476)
+  * [“error 65: access violation at 0x40021000 : no 'read' permission”错误的解决](https://blog.csdn.net/u012075442/article/details/78722593)
+  * [【09】keil软件仿真STM32，电脑上虚拟串口收发，无需硬件](https://www.bilibili.com/read/cv18123376/)
+  
 ### 8）08_OS_memory
 * 工程和源码在本文档同级目录\src\08_OS_memory\下
 * 该工程内容暂未编写…………
