@@ -81,7 +81,7 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
 * 下载地址举例：https://www.keil.com/fid/comahow53j1j1wriguw1y56me9lv1dgw3o3fd1/files/eval/mdk536.exe  
 * MKD-arm评估版软件官方下载地址（也就是不注册账号就下载，有32K代码限制）：[mdk536.exe](https://www.keil.com/fid/6upwf5w1y9wj1wt4huw1djsme93o1dgwmicqd1/files/eval/mdk536.exe)  
 * 安装的时候会自动下载各种芯片包。  
-* MKD里面没有硬件模拟器，可以直接运行和调试程序，你也可以编译完生成可执行程序后在QEMU软件里面仿真运行。  
+* MKD里面有硬件模拟器，可以直接运行和调试程序，你也可以编译完生成可执行程序后在QEMU软件里面仿真运行。  
 * Keil创建M3工程的流程可以网上自行搜索，创建时可以添加ARM官方提供的各个模块的代码，可以节省开发时间。
 
 ## 三、M3指令集和寄存器介绍
@@ -90,8 +90,10 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
 
 * 芯片（IP核）手册 [ARM Cortex-M3 Processor Technical Reference Manual](https://developer.arm.com/documentation/100165/0201/)  
 * ARMv7-M指令集手册 [ARMv7-M Architecture Reference Manual](https://developer.arm.com/documentation/ddi0403/ee)  
+* Cortex-M3外设接口手册[Cortex-M3 Devices Generic User Guide](https://developer.arm.com/documentation/dui0552/latest/)
+* CMSIS-Core Device Templates，在Keil的安装目录：file:///D:/Keil_v5/ARM/Packs/ARM/CMSIS/5.9.0/CMSIS/Documentation/Core/html/templates_pg.html
 
-* 以上两个文档描述了M3内核的通用寄存器和指令集，其中：
+* 最前面两个两个文档描述了M3内核的通用寄存器和指令集，其中：
   * 芯片手册的“Table 3-1 Cortex-M3 instruction set summary”有所有指令的汇总表格，在线阅读地址在[Processor instructions](https://developer.arm.com/documentation/100165/0201/Programmers-Model/Instruction-set-summary/Processor-instructions)。
   *  指令集汇总的本地**子文档**：[01_ARM Cortex-M3指令集汇总.md](./doc/01_ARM Cortex-M3指令集汇总.md)
 
@@ -317,28 +319,46 @@ __hardwareInit  PROC
 
 ### 6）06_Hardware_arch_code
 * 将硬件arch和系统逻辑代码分离
-* 中断控制、时钟基准、大小端转换、系统退出、输入输出重映射、延时函数
+* 仿照Linux kernel的文件结构，将系统底层硬件相关的文件独立出来，让后将相关代码放在名为arch的文件夹中
+* 实现通用的操作系统底层硬件相关的接口，如中断控制、时钟基准、大小端转换、系统退出、输入输出重映射、延时函数
 * 工程和源码在本文档同级目录\src\06_Hardware_arch_code\下
+* 本仓库中的源码以Linux kernel中对应的文件为参考
+* Linux kernel源码与相关文件的介绍
+  * 1. 获取kernel源码，下载或clone的地址：[Gitee 极速下载 / Linux Kernel](https://gitee.com/mirrors/linux_old1)，源码总大小5.3G，.git历史数据的大小有3.8G，源码有1.3G左右；
+  * 2. Windows下下载后解压会报错，Git clone后checkout .检出文件也会报错，因为有三个文件名aux.c和aux.h和Windows预留文件名重合，Windows只允许自己使用：'drivers/gpu/drm/nouveau/nvkm/subdev/i2c/aux.c'， 'drivers/gpu/drm/nouveau/nvkm/subdev/i2c/aux.h'，'include/soc/arc/aux.h'，类似的文件名还有COM1到COM9，LPT1到LPT9；可以将kernel仓库在Windows上下载或者clone后拷贝到Linux系统如Ubuntu中，然后checkout或者解压，然后切换到发布版本版本，git checkout 然后将上述三个文件重命名或者删除，将.git隐藏文件删除，然后拷贝回Windows系统，便于查看代码。
+  * 如果你只是查看kernel代码，则可以删除.git文件夹，arch/下除了arm的其它文件夹，arch/arm/下match-开头的文件夹只保留一个你熟悉的板子型号，如match-stm32，这样创建工程后查看代码跳转时更方便。
+
+* 该工程内容暂未编写，先进行07_OS_kernel case…………
 
 ### 7）07_OS_kernel
 
+* 嵌入式常见的RTOS有好几个，很多都是线程管理、内存管理、驱动框架、文件系统框架等操作元素合在一起的，移植起来复杂一点，我需要更简单的演示；所以我这里选用Atomthreads，它纯粹就只有一个OS中的进程管理模块，总共也只有6个.c文件，内容简单，便于理解；可以熟悉移植线程管理模块需要修改哪些硬件相关的代码；它也可以移植到8位CPU上面。
+  * 官方网址：[Atomthreads: Open Source RTOS](http://atomthreads.com/)
+
 * 工程和源码在本文档同级目录\src\07_OS_kernel\下
+* 更多的移植流程详见**子文档**[《03_ARM Cortex-M3 Atomthreads操作系统内核移植过程.md》](./doc/03_ARM Cortex-M3 Atomthreads操作系统内核移植过程.md)
 
-* uCOS系统比较简单，配置没有图形界面或者字符界面，就是宏定义文件。
-* RT-Thread系统配置在Windows下有图形界面，在Linux有Linux内核同款的menuconfig字符配置界面，配完后会生成一个有宏定义的头文件。
-* 自己写操作系统时，也可以用menuconfig模块作为你的配置界面。
-* eCos有自己的图形配置界面。
-* Linux使用menuconfig字符配置界面。
+* 其它几个操作系统移植时需要的配置操作：
+  * uCOS系统比较简单，配置没有图形界面或者字符界面，就是宏定义文件。
+  * FreeRTOS配置也没有图形界面或者字符界面，就是宏定义文件。
+  * RT-Thread系统配置在Windows下有图形界面，在Linux有Linux内核同款的menuconfig字符配置界面，配完后会生成一个有宏定义的头文件。
+  * 自己写操作系统时，也可以用menuconfig模块作为你的配置界面。
+  * eCos有自己的图形配置界面。
+  * Linux使用menuconfig字符配置界面。
 
-[嵌入式操作系统-ucos的移植（上）](https://zhuanlan.zhihu.com/p/385057352)
-[RT-Thread 之 PWM 设备驱动详细配置过程（血泪经验）](https://blog.csdn.net/hanhui22/article/details/107717884)
-[RTThread Studio开发STM32基本工程配置](https://blog.51cto.com/u_15060513/4039456)
-[rtthread 4.0 shell的裁剪](https://club.rt-thread.org/ask/question/da39bbf94abde0fe.html)
-[使用eCos图形化配置工具管理eCos应用程序](https://blog.csdn.net/zoomdy/article/details/12908559)
-[uCOSII、eCos、FreeRTOS和djyos操作系统的特点及不足](https://www.elecfans.com/emb/20201001785961.html)
-[关于ucosII系统的软件系统裁剪性](https://www.cnblogs.com/bajiankeji/p/4966775.html)
+[嵌入式操作系统-ucos的移植（上）](https://zhuanlan.zhihu.com/p/385057352)  
+[RT-Thread 之 PWM 设备驱动详细配置过程（血泪经验）](https://blog.csdn.net/hanhui22/article/details/107717884)  
+[RTThread Studio开发STM32基本工程配置](https://blog.51cto.com/u_15060513/4039456)  
+[rtthread 4.0 shell的裁剪](https://club.rt-thread.org/ask/question/da39bbf94abde0fe.html)  
+[使用eCos图形化配置工具管理eCos应用程序](https://blog.csdn.net/zoomdy/article/details/12908559)  
+[uCOSII、eCos、FreeRTOS和djyos操作系统的特点及不足](https://www.elecfans.com/emb/20201001785961.html)  
+[关于ucosII系统的软件系统裁剪性](https://www.cnblogs.com/bajiankeji/p/4966775.html)  
+[FreeRTOS（1）---FreeRTOS 内核配置说明](https://blog.csdn.net/qq_27114397/article/details/82996622)  
 
 ### 8）08_OS_memory
 * 工程和源码在本文档同级目录\src\08_OS_memory\下
+* 该工程内容暂未编写…………
+
 ### 9）09_OS_filesystem
 * 工程和源码在本文档同级目录\src\09_OS_filesystem\下
+* 该工程内容暂未编写…………

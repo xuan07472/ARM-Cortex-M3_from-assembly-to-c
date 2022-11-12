@@ -1,0 +1,35 @@
+外面有的文件夹，都可以在这里有同名的文件夹和位置存在；同样的逻辑可以分开为硬件相关和纯逻辑的
+
+cpu/
+
+mm/dma.c
+	cache.c
+kernel/time.c 定时器初始化			kernel可以改为core
+	arch_timer.c 定时器初始化，加载
+	asm-offsets.c 寄存器定义
+	dma.c dma操作
+	io.c 读写文件，读写寄存器
+	irq.c 初始化终端
+	time.c 定时器初始化
+
+boot
+common
+configs
+include
+	asm
+	debug
+	uapi
+lib
+mm
+net
+tools
+
+====
+Linux原本的文件路径：
+linux_6.1-rc4\kernel\time\jiffies.c
+linux_6.1-rc4\arch\arm\mach-omap1\irq.c
+linux_6.1-rc4\arch\arm\kernel\irq.c
+linux_6.1-rc4\kernel\time\time.c
+
+
+
