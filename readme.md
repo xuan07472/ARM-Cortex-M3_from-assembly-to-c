@@ -373,6 +373,8 @@ __hardwareInit  PROC
   * [【09】keil软件仿真STM32，电脑上虚拟串口收发，无需硬件](https://www.bilibili.com/read/cv18123376/)
   
 ### 8）08_OS_memory
+
+* ==》该工程内容未编写…………《==
 * 工程和源码在本文档同级目录\src\08_OS_memory\下
 * 使用开源的dlmalloc可以实现操作系统中的内存管理模块，只有一个.c和一个.h就可实现。
   * 第一个下载地址是[mirrors_android_source / dlmalloc](https://gitee.com/mirrors_android_source/dlmalloc)，但是不用这里面的代码
@@ -385,5 +387,16 @@ __hardwareInit  PROC
 * [dlmalloc（一）](https://blog.csdn.net/ycnian/article/details/12971863)
 
 ### 9）09_OS_filesystem
+
+* ==》该工程内容未编写…………《==
 * 工程和源码在本文档同级目录\src\09_OS_filesystem\下
-* 该工程内容暂未编写…………
+* 使用FatFs开源嵌入式文件系统，里面只有7个源文件，支持exFAT和FAT32格式的U盘、SD卡等，支持Unicode中文和ANSI/OEM GB2312中文。
+  * 源码中已适配uC/OS-II、FreeRTOS和Keil CMSIS-RTOS操作系统。
+  * 官方下载地址[FatFs](http://elm-chan.org/fsw/ff/archives.html)，下载地址比较慢。
+  * 添加头文件实现DWORD、QWORD、UINT、BYTE、WORD、WCHAR、TCHAR等数据类型定义。
+  * 将ffconf.h中的配置宏定义和你自己系统中的宏定义结合统一起来。
+  * 实现diskio.c中要调用的底层USB、SD卡等驱动的文件读写接口。 
+
+* *参考网址：*
+* [Fatfs（文件系统的移植）](https://blog.csdn.net/qq_45531642/article/details/121035429)
+* [FatFs（通用FAT文件系统模块）下载与介绍](https://blog.csdn.net/qq_38318207/article/details/108566392)
