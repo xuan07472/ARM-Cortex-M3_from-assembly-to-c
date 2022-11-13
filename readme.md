@@ -374,7 +374,15 @@ __hardwareInit  PROC
   
 ### 8）08_OS_memory
 * 工程和源码在本文档同级目录\src\08_OS_memory\下
-* 该工程内容暂未编写…………
+* 使用开源的dlmalloc可以实现操作系统中的内存管理模块，只有一个.c和一个.h就可实现。
+  * 第一个下载地址是[mirrors_android_source / dlmalloc](https://gitee.com/mirrors_android_source/dlmalloc)，但是不用这里面的代码
+  * 上面下载的版本里面有安卓加的少量修改，但是文件的注释里面有没修改的原始地址，是ftp的方式：ftp://gee.cs.oswego.edu/pub/misc/malloc.c 和ftp://gee.cs.oswego.edu/pub/misc/malloc-2.8.6.h ，如果你不会ftp下载，可以直接网页访问https://gee.cs.oswego.edu/pub/misc/ 复制里面的malloc-2.8.6.c和malloc-2.8.6.h，将其改名为dlmalloc.c和dlmalloc.h。
+  * 在.c源码里加入dlmalloc_init和dlmalloc_sbrk函数，传入你给内存分配器分配的总内存。
+  * 然后在.h头文件里加入MALLOC_ALIGNMENT、malloc_getpagesize等一系列配置宏定义。
+  * 然后在程序中调用dlmalloc_init函数初始化后，你就可以使用malloc和free了
+
+* *参考网址：*
+* [dlmalloc（一）](https://blog.csdn.net/ycnian/article/details/12971863)
 
 ### 9）09_OS_filesystem
 * 工程和源码在本文档同级目录\src\09_OS_filesystem\下
