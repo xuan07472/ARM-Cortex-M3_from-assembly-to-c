@@ -9,4 +9,5 @@ RTE_Components.h
 EventRecorderStub.scvd
 *.BAT
 RTE/
+DebugConfig/
 
