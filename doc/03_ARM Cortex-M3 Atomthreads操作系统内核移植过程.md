@@ -123,9 +123,14 @@ $ tree
     * 编译过程[LibOpenCM3(一) Linux下命令行开发环境配置](https://www.cnblogs.com/milton/p/15917192.html)
     * 我编译好的版本[才鲸嵌入式/98-7 libopencm3已经编译好的版本](https://gitee.com/langcai1943/libopencm3)
   * 然后先在Keil中包含了atomthreads源码的工程，添加头文件包含路径，然后编译，查看缺哪些文件，然后将对应的文件拷贝到Keil工程中
+  * 但是最终还是有协议GNU特有的C语言格式在Keil中编译不过，最终放弃
 * *参考网址：*
   * 官方网址：[Atomthreads: Open Source RTOS](http://atomthreads.com/)
   * [stm8使用atomthreads项目](https://blog.csdn.net/yoeksome/article/details/51724778)
   * [AtomThreads RTOS移植到低RAM(4K)的芯片](https://www.pudn.com/news/6228e2ec9ddf223e1ad3271c.html)
   * [8位单片机轻松跑RTOS操作系统](https://blog.csdn.net/ybhuangfugui/article/details/120714748)
   * [STM8L最小系统板移植Atomthreads成功](https://blog.csdn.net/cpuwolf/article/details/13289351)
+
+* Atomthreads中硬件适配的源码，如ARM9、ARM Cortex-Axx、Cortex-M3都是在Linux下用Makefile进行编译的；我还是先读懂Atomthreads的源码，在Keil上用STM32F103模拟器一步一步的写。
+* Atomthreads源码分析：
+  * 

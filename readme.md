@@ -73,6 +73,8 @@ Bilibili视频讲解地址（待完成）：[才鲸嵌入式](https://space.bili
 * 本仓库所有工程均在Keil下创建，并使用Keil的模拟器运行，不使用具体的硬件开发板，Keil版本为MDK537.exe。
 * Keil使用模拟器的方法：Keil配置的Debug栏要选择Use Simulator，不选择默认的ULINK2/ME Cortex Debugger。
 * 如果有**报错**[Error: L6218E: Undefined symbol Image$$ARM_LIB_STACK$$ZI$$Limit Not enough information to list image](https://blog.csdn.net/qq_41200467/article/details/124958685)，则按网址中的描述配置一下链接器.sct文件路径。
+* Keil的模拟器介绍：
+  * [Keil 模拟 STM32F103 示例体验](https://os.iot.10086.cn/oneos-doc-2.0/quick_start/keilsimulator.html)
 
 ## 二、ARM-MDK IDE集成开发环境下载  
 * MDK-arm软件社区版官方介绍（无代码大小限制，不能用于商用，需要先获取社区版许可证，也就是在官网注册账号后再下载）：[MDK-社区版概述](https://www.keil.com/pr/article/1299.htm)  
@@ -371,11 +373,28 @@ __hardwareInit  PROC
   * [Keil环境配置及stm32程序的仿真调试](https://blog.csdn.net/qq_41675500/article/details/120517476)
   * [“error 65: access violation at 0x40021000 : no 'read' permission”错误的解决](https://blog.csdn.net/u012075442/article/details/78722593)
   * [【09】keil软件仿真STM32，电脑上虚拟串口收发，无需硬件](https://www.bilibili.com/read/cv18123376/)
-  
+
+---
+
+* Keil创建STM32F103ZG工程
+* 创建工程时选择CMSIS--CORE，Compiler--I/O--STDERR/STDIN/STDOUT--ITM，Device--Startup
+* 在软件配置的Debug页面，选择模拟器Use Simulator，并且将Cortex-M3的模拟器库改成STM32F1xx的，步骤未：将DCM.DLL和-pCM3改为DARMSTM.DLL和-pSTM32F103ZG
+* 防止仿真时出错：新建一个debug_map.ini文件，里面写上map 0x40000000,0x400FFFFF read write保存；在魔术棒的设置图标Options->Debug->Use_Simulator->Initialization_File，选中刚刚的文件。
+* 工程里新建一个main.c，写上main()函数，里面写printf语句，编译，debug调试，点开Debug(printf) Viewer窗口中能看到你的输出语句。
+* 加入Atomthreads kernel部分的源码，设置窗口--C/C++(A6)--Include Paths中加入该源码的文件夹路径，用于加载头文件。
+* 自己写硬件相关的部分（也就是移植操作系统kernel），给kernel提供atomport.h头文件。
+* 先熟悉整个kernel，看看源码中需要哪些底层支撑，顺便给kernel源码加上注释。
+* 写个atomport.h文件，里面加上一些宏定义；写个atomport.c，里面实现3个空函数；先保证整个工程编译通过，然后再看具体要实现什么东西；具体弄清楚要实现的东西，也就能对内核需要哪些硬件支撑有了解了。
+* 去掉keil自带的一些警告输出。
+* 
+
 ### 8）08_OS_memory
 
 * ==》该工程内容未编写…………《==
 * 工程和源码在本文档同级目录\src\08_OS_memory\下
+* 内存操作实际上就是对Heap堆的操作。
+* Keil也自带了堆操作的库，已经实现了malloc和free，直接在工程里勾选微库MicroLI即可，微库内部位置一个堆管理模块。
+  * [Keil的堆设置](https://blog.csdn.net/fuyunyouziyi/article/details/51490787)
 * 使用开源的dlmalloc可以实现操作系统中的内存管理模块，只有一个.c和一个.h就可实现。
   * 第一个下载地址是[mirrors_android_source / dlmalloc](https://gitee.com/mirrors_android_source/dlmalloc)，但是不用这里面的代码
   * 上面下载的版本里面有安卓加的少量修改，但是文件的注释里面有没修改的原始地址，是ftp的方式：ftp://gee.cs.oswego.edu/pub/misc/malloc.c 和ftp://gee.cs.oswego.edu/pub/misc/malloc-2.8.6.h ，如果你不会ftp下载，可以直接网页访问https://gee.cs.oswego.edu/pub/misc/ 复制里面的malloc-2.8.6.c和malloc-2.8.6.h，将其改名为dlmalloc.c和dlmalloc.h。
