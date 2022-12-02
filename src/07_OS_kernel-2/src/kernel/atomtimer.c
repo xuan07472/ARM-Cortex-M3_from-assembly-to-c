@@ -1,6 +1,13 @@
-/*
+/*******************************************************************************
+ * \brief	线程软定时器队列和系统滴答的源文件
+ * \details	供挂起线程的时间片轮转，也供互斥和信号量的超时等待
+ * \note	File format: UTF-8, 中文编码：UTF-8
+ * \author	注释作者：将狼才鲸
+ * \date	注释日期：2022-12-01
+ *******************************************************************************
  * Copyright (c) 2010, Kelvin Lawson. All rights reserved.
  *
+ * 以下都是版权声明：
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -73,6 +80,7 @@
 /* Data types */
 
 /* Delay callbacks data structure */
+/* 硬件定时器中断中进行回调赋值的线程上下文中的时间结构 */
 typedef struct delay_timer
 {
     ATOM_TCB *tcb_ptr;  /* Thread which is suspended with timeout */
@@ -85,9 +93,11 @@ typedef struct delay_timer
 /* Local data */
 
 /** Pointer to the head of the outstanding timers queue */
+/* 线程的软定时器队列，用来指示线程等待时间是否超时 */
 static ATOM_TIMER *timer_queue = NULL;
 
 /** Current system tick count */
+/* 当前的系统时钟滴答（不是主频跳了多少次，比主频跳动要慢） */
 static uint32_t system_ticks = 0;
 
 
@@ -122,10 +132,11 @@ static void atomTimerDelayCallback (POINTER cb_data);
  * @retval ATOM_OK Success
  * @retval ATOM_ERR_PARAM Bad parameters
  */
+/* 注册定时器回调 */
 uint8_t atomTimerRegister (ATOM_TIMER *timer_ptr)
 {
     uint8_t status;
-    CRITICAL_STORE;
+    CRITICAL_STORE; /* 读取中断寄存器 */
 
     /* Parameter check */
     if ((timer_ptr == NULL) || (timer_ptr->cb_func == NULL)
@@ -137,7 +148,7 @@ uint8_t atomTimerRegister (ATOM_TIMER *timer_ptr)
     else
     {
         /* Protect the list */
-        CRITICAL_START ();
+        CRITICAL_START (); /* 关闭中断 */
 
         /*
          * Enqueue in the list of timers.
@@ -151,18 +162,20 @@ uint8_t atomTimerRegister (ATOM_TIMER *timer_ptr)
         if (timer_queue == NULL)
         {
             /* List is empty, insert new head */
+			/* 如果定时器队列为空，则将自己设为队列头 */
             timer_ptr->next_timer = NULL;
             timer_queue = timer_ptr;
         }
         else
         {
             /* List has at least one entry, enqueue new timer before */
+			/* 如果定时器队列已存在，则将自己加到队列末尾 */
             timer_ptr->next_timer = timer_queue;
             timer_queue = timer_ptr;
         }
 
         /* End of list protection */
-        CRITICAL_END ();
+        CRITICAL_END (); /* 恢复中断 */
 
         /* Successful */
         status = ATOM_OK;
@@ -187,11 +200,12 @@ uint8_t atomTimerRegister (ATOM_TIMER *timer_ptr)
  * @retval ATOM_ERR_PARAM Bad parameters
  * @retval ATOM_ERR_NOT_FOUND Timer registration was not found
  */
+/* 取消之前注册的定时器回调，从定时器队列中移除 */
 uint8_t atomTimerCancel (ATOM_TIMER *timer_ptr)
 {
     uint8_t status = ATOM_ERR_NOT_FOUND;
     ATOM_TIMER *prev_ptr, *next_ptr;
-    CRITICAL_STORE;
+    CRITICAL_STORE; /* 读中断状态 */
 
     /* Parameter check */
     if (timer_ptr == NULL)
@@ -202,7 +216,7 @@ uint8_t atomTimerCancel (ATOM_TIMER *timer_ptr)
     else
     {
         /* Protect the list */
-        CRITICAL_START ();
+        CRITICAL_START (); /* 关闭中断 */
 
         /* Walk the list to find the relevant timer */
         prev_ptr = next_ptr = timer_queue;
@@ -234,7 +248,7 @@ uint8_t atomTimerCancel (ATOM_TIMER *timer_ptr)
         }
 
         /* End of list protection */
-        CRITICAL_END ();
+        CRITICAL_END (); /* 恢复中断 */
      }
 
     return (status);
@@ -251,6 +265,7 @@ uint8_t atomTimerCancel (ATOM_TIMER *timer_ptr)
  * @retval Current system tick count
 
  */
+/* 获取系统时钟滴答 */
 uint32_t atomTimeGet(void)
 {
     return (system_ticks);
@@ -273,6 +288,7 @@ uint32_t atomTimeGet(void)
  *
  * @return None
  */
+/* 内部测试时使用的，修改系统滴答 */
 void atomTimeSet(uint32_t new_time)
 {
     system_ticks = new_time;
@@ -292,6 +308,9 @@ void atomTimeSet(uint32_t new_time)
  *
  * @return None
  */
+/* 系统移植时需要在硬件定时器中断处理中调用的第2个函数 */
+/* 每次进入会增加操作系统的滴答，并会循环定时器队列中的所有软定时器，减去计数并判断是否到时 */
+/* 可用于挂起的线程队列 */
 void atomTimerTick (void)
 {
     /* Only do anything if the OS is started */
@@ -301,6 +320,7 @@ void atomTimerTick (void)
         system_ticks++;
 
         /* Check for any callbacks that are due */
+		/* 循环定时器队列中的所有软定时器，减去计数并判断是否到时 */
         atomTimerCallbacks ();
     }
 }
@@ -324,12 +344,13 @@ void atomTimerTick (void)
  * @retval ATOM_ERR_PARAM Bad parameter (ticks must be non-zero)
  * @retval ATOM_ERR_CONTEXT Not called from thread context
  */
+/* 将线程挂起多少个系统滴答 */
 uint8_t atomTimerDelay (uint32_t ticks)
 {
     ATOM_TCB *curr_tcb_ptr;
     ATOM_TIMER timer_cb;
     DELAY_TIMER timer_data;
-    CRITICAL_STORE;
+    CRITICAL_STORE; /* 读中断状态 */
     uint8_t status;
 
     /* Get the current TCB  */
@@ -353,7 +374,7 @@ uint8_t atomTimerDelay (uint32_t ticks)
     else
     {
         /* Protect the system queues */
-        CRITICAL_START ();
+        CRITICAL_START (); /* 关中断 */
 
         /* Set suspended status for the current thread */
         curr_tcb_ptr->suspended = TRUE;
@@ -372,6 +393,7 @@ uint8_t atomTimerDelay (uint32_t ticks)
         curr_tcb_ptr->suspend_timo_cb = &timer_cb;
 
         /* Register the callback */
+		/* 将挂起的线程加入到软定时器队列 */
         if (atomTimerRegister (&timer_cb) != ATOM_OK)
         {
             /* Exit critical region */
@@ -383,7 +405,7 @@ uint8_t atomTimerDelay (uint32_t ticks)
         else
         {
             /* Exit critical region */
-            CRITICAL_END ();
+            CRITICAL_END (); /* 恢复中断 */
 
             /* Successful timer registration */
             status = ATOM_OK;
@@ -406,6 +428,7 @@ uint8_t atomTimerDelay (uint32_t ticks)
  *
  * @return None
  */
+/* 遍历软定时器队列，减少里面的计数，找到队列中能可以退出的软定时器 */
 static void atomTimerCallbacks (void)
 {
     ATOM_TIMER *prev_ptr, *next_ptr, *saved_next_ptr;
@@ -422,9 +445,11 @@ static void atomTimerCallbacks (void)
         saved_next_ptr = next_ptr->next_timer;
  
         /* Is this entry due? */
+		/* 线程定时器是否到时 */
         if (--(next_ptr->cb_ticks) == 0)
         {
             /* Remove the entry from the timer list */
+			/* 如果定时器已到，则移除该定时器 */
             if (next_ptr == timer_queue)
             {
                 /* We're removing the list head */
@@ -458,6 +483,7 @@ static void atomTimerCallbacks (void)
             }
 
             /* Mark this timer as the end of the callback list */
+			/* 退出循环 */
             next_ptr->next_timer = NULL;
 
             /* Do not update prev_ptr, we have just removed this one */
@@ -475,6 +501,7 @@ static void atomTimerCallbacks (void)
         }
 
         /* Move on to the next in the list */
+		/* 循环下一个定时器 */
         next_ptr = saved_next_ptr;
     }
 
@@ -495,6 +522,7 @@ static void atomTimerCallbacks (void)
             saved_next_ptr = next_ptr->next_timer;
 
             /* Call the registered callback */
+			/* 定时器到时后执行对应的操作 */
             if (next_ptr->cb_func)
             {
                 next_ptr->cb_func (next_ptr->cb_data);
@@ -519,6 +547,7 @@ static void atomTimerCallbacks (void)
  *
  * @return None
  */
+/* 唤醒挂起的线程 */
 static void atomTimerDelayCallback (POINTER cb_data)
 {
     DELAY_TIMER *timer_data_ptr;
@@ -531,9 +560,10 @@ static void atomTimerDelayCallback (POINTER cb_data)
     if (timer_data_ptr)
     {
         /* Enter critical region */
-        CRITICAL_START ();
+        CRITICAL_START (); /* 关闭中断 */
 
         /* Put the thread on the ready queue */
+		/* 将挂起队列的线程加入到就绪队列 */
         (void)tcbEnqueuePriority (&tcbReadyQ, timer_data_ptr->tcb_ptr);
 
         /* Exit critical region */

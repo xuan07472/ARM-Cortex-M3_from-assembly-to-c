@@ -386,7 +386,10 @@ __hardwareInit  PROC
 * 先熟悉整个kernel，看看源码中需要哪些底层支撑，顺便给kernel源码加上注释。
 * 写个atomport.h文件，里面加上一些宏定义；写个atomport.c，里面实现3个空函数；先保证整个工程编译通过，然后再看具体要实现什么东西；具体弄清楚要实现的东西，也就能对内核需要哪些硬件支撑有了解了。
 * 去掉keil自带的一些警告输出。
-* 
+* 操作系统移植的工作：
+  * 开启一个硬件定时器，在定时器的中断函数中调用atomIntEnter、atomIntExit、函数
+  * 新建atomport.c/h文件，在里面实现archFirstThreadRestore、archContextSwitch、archThreadContextInit函数，实现读取中断状态寄存器、关中断、恢复中断；用汇编语言，使用CPU的R0~R15状态寄存器和其它寄存器进行任务切换。
+  * 底层还能再实现一个task任务模块。
 
 ### 8）08_OS_memory
 

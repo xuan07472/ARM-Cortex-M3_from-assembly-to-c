@@ -1,6 +1,12 @@
-/*
+/*******************************************************************************
+ * \brief	信号量功能
+ * \note	File format: UTF-8, 中文编码：UTF-8
+ * \author	注释作者：将狼才鲸
+ * \date	注释日期：2022-12-02
+ *******************************************************************************
  * Copyright (c) 2010, Kelvin Lawson. All rights reserved.
  *
+ * 以下都是版权声明：
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -29,6 +35,9 @@
 
 
 /** 
+ * 信号量。
+ * 可阻塞或不阻塞，计数最多255
+ *
  * \file
  * Semaphore library.
  *
@@ -97,7 +106,9 @@
 
 typedef struct sem_timer
 {
+    /* 正在采用超时机制等待信号量的线程队列 */
     ATOM_TCB *tcb_ptr;  /* Thread which is suspended with timeout */
+    /* 一个信号量，里面有正在死等的线程队列 */
     ATOM_SEM *sem_ptr;  /* Semaphore the thread is suspended on */
 } SEM_TIMER;
 

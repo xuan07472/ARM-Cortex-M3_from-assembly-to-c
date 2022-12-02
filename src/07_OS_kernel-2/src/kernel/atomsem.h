@@ -34,9 +34,12 @@
 extern "C" {
 #endif
 
+/* 一个信号量 */
 typedef struct atom_sem
 {
+    /* 正等待获取该信号量的线程队列 */
     ATOM_TCB *  suspQ;  /* Queue of threads suspended on this semaphore */
+    /* 信号量计数 */
     uint8_t     count;  /* Semaphore count */
 } ATOM_SEM;
 

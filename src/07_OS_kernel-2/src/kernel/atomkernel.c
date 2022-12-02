@@ -1,6 +1,15 @@
-/*
+/*******************************************************************************
+ * \brief	线程管理的源文件
+ * \details	实现线程创建、挂起、切换、销毁等功能；一些线程管理的基础概念有：时间片
+ *			轮转、线程优先级、线程死锁、优先级继承、优先级天花板、任务阻塞。
+ *			输出的函数接口在atom.h中，创建线程要包含这个头文件。
+ * \note	File format: UTF-8, 中文编码：UTF-8
+ * \author	注释作者：将狼才鲸
+ * \date	注释日期：2022-12-01
+ *******************************************************************************
  * Copyright (c) 2010, Kelvin Lawson. All rights reserved.
  *
+ * 以下都是版权声明：
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -25,13 +34,35 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
+ ******************************************************************************/
 
 
 /**
  * \file
  * Kernel library.
  *
+ *		这个源文件实现了线程管理的功能，包括：上下文切换，中断处理，任务控制队列
+ * 如就绪线程队列、阻塞队列。
+ *		必须始终有一个线程处于就绪状态，如果没有则会运行默认的空闲线程。
+ *		使用atomThreadCreate()创建线程，创建的线程会添加到就绪队列，然后基于线程
+ * 的优先级，在轮到它运行的时候则运行。
+ *		一个线程在某些情况下会从运行队列转移到就绪队列，如：自己通过信号量调用了
+ * 阻塞或延时；被更高优先级的线程抢占；存在同样优先级的就绪线程，并且当前线程的
+ * 时间片已经用完。
+ *		线程调用使用atomSched()函数，但这不是给应用程序使用的，是内部使用的函数。
+ * 可以由中断处理程序重新调度；基于计时器滴答的时间片轮转；如果出现了新建高优先级
+ * 线程，或者有信号量、互斥等线程操作。
+ *
+ *		执行线程调度时，需要调用archContextSwitch()保存或恢复上下文，会使用到CPU
+ * 的寄存器。
+ *		整个模块开始工作前，有一些必要要调用的函数：atomOSInit()、atomOSStart()。
+ * 之后，线程管理的函数才能被调用：用户调用的atomThreadCreate()，atomCurrentContext()、
+ * 中断中调用的atomIntEnter()、atomIntExit()。
+ *
+ *		一些模块内部的函数：核心调度atomSched()、上下文切换atomThreadSwitch()、
+ * 没有线程就绪时的默认线程atomIdleThread()、线程排队tcbEnqueuePriority()、
+ * 对队列头进行排队tcbRequestHead()、从队列中删除tcbRequestEntry()、
+ * 使用优先级从队列中删除tcbRequestPriority()
  *
  * This module implements the core kernel functionality of managing threads,
  * context-switching and interrupt handlers. It also contains functions for
@@ -167,28 +198,40 @@
  * either placed back on the ready queue (if still ready), or will be suspended
  * on some OS primitive if no longer ready (e.g. on the suspended TCB queue
  * for a semaphore, or in the timer list if suspended on a timer delay).
+ *
+ * 		这是就绪线程队列，按照优先级排序，相同优先级使用FIFO先入先出。
+ *		这是有序列表，上下文切换的时间取决于就绪队列上的线程数；可以自行
+ * 替换为其它调度器方案。
+ *		当线程运行时，它不会存在于任何队列中，当它当次运行结束后，会再次
+ * 被放回就绪队列，或者暂停：在挂起队列中，或者计时器列表中。
+ *
  */
 ATOM_TCB *tcbReadyQ = NULL;
 
 /** Set to TRUE when OS is started and running threads */
+/* 系统已运行标志 */
 uint8_t atomOSStarted = FALSE;
 
 
 /* Local data */
 
 /** This is a pointer to the TCB for the currently-running thread */
+/* 当前正在运行的线程 */
 static ATOM_TCB *curr_tcb = NULL;
 
 /** Storage for the idle thread's TCB */
+/* 空闲的线程 */
 static ATOM_TCB idle_tcb;
 
 /* Number of nested interrupts */
+/* 可嵌套的中断数 */
 static int atomIntCnt = 0;
 
 
 /* Constants */
 
 /** Bytecode to fill thread stacks with for stack-checking purposes */
+/* 用于堆栈检查的默认填充码 */
 #define STACK_CHECK_BYTE    0x5A
 
 
@@ -219,10 +262,15 @@ static void atomIdleThread (uint32_t data);
  * @param[in] timer_tick Should be TRUE when called from the system tick
  *
  * @return None
+ *
+ * 内部函数，主调度函数。
+ * 检查是否有应该调度的线程，如果有则切换线程上下文。
+ * 优先级高的优先调度，优先级相同的基于时间片轮转调度
+ * 参数：是否从系统时钟滴答进行调度。
  */
 void atomSched (uint8_t timer_tick)
 {
-    CRITICAL_STORE;
+    CRITICAL_STORE;	/* 读中断状态，由硬件相关的代码实现 */
     ATOM_TCB *new_tcb = NULL;
     int16_t lowest_pri;
 
@@ -231,6 +279,7 @@ void atomSched (uint8_t timer_tick)
      * sequence is followed there should be no calls here until the OS is
      * started, but we check to handle badly-behaved ports.
      */
+	/* 检查调度前操作系统是否已经正常启动 */
     if (atomOSStarted == FALSE)
     {
         /* Don't schedule anything in until the OS is started */
@@ -238,13 +287,15 @@ void atomSched (uint8_t timer_tick)
     }
 
     /* Enter critical section */
-    CRITICAL_START ();
+	/* 进入临界区 */
+    CRITICAL_START (); /* 关中断，保证原子操作不被打断，由硬件相关的代码实现 */
 
     /**
      * If the current thread is going into suspension or is being
      * terminated (run to completion), then unconditionally dequeue
      * the next thread for execution.
      */
+	/* 如果当前线程已经暂停或者停止，则直接退出该线程并切换下一个线程 */
     if ((curr_tcb->suspended == TRUE) || (curr_tcb->terminated == TRUE))
     {
         /**
@@ -253,6 +304,7 @@ void atomSched (uint8_t timer_tick)
          * actually be the suspending thread if it was unsuspended
          * before the scheduler was called.
          */
+        /* 使下一个准备运行的线程退出队列。总会有至少1个空闲线程正在等待 */
         new_tcb = tcbDequeueHead (&tcbReadyQ);
 
         /**
@@ -261,8 +313,12 @@ void atomSched (uint8_t timer_tick)
          * sitting on a suspend queue or similar within one of the OS
          * primitive libraries (e.g. semaphore).
          */
+        /* 不需要将当前线程添加到任何队列，因为它被另一个操作系统机制挂起
+         * 它已经处于挂起队列或信号量的队列中
+         */
 
         /* Switch to the new thread */
+        /* 切换到新线程 */
         atomThreadSwitch (curr_tcb, new_tcb);
     }
 
@@ -270,17 +326,21 @@ void atomSched (uint8_t timer_tick)
      * Otherwise the current thread is still ready, but check
      * if any other threads are ready.
      */
+    /* 如果时间片到了，将当前线程放回到就绪队列中，并切换线程 */
     else
     {
         /* Calculate which priority is allowed to be scheduled in */
+        /* 判断允许调度的优先级 */
         if (timer_tick == TRUE)
         {
             /* Same priority or higher threads can preempt */
+            /* 相同优先级或更高优先级的线程可以抢占 */
             lowest_pri = (int16_t)curr_tcb->priority;
         }
         else if (curr_tcb->priority > 0)
         {
             /* Only higher priority threads can preempt, invalid for 0 (highest) */
+            /* 只有更高优先级的线程才能抢占 */
             lowest_pri = (int16_t)(curr_tcb->priority - 1);
         }
         else
@@ -289,29 +349,36 @@ void atomSched (uint8_t timer_tick)
              * Current priority is already highest (0), don't allow preempt by
              * threads of any priority because this is not a time-slice.
              */
+            /* 当前优先级已最高（0），不允许任何优先级的线程抢占，因为这不是时间片 */
             lowest_pri = -1;
         }
 
         /* Check if a reschedule is allowed */
+        /* 检查是否可以切换线程 */
         if (lowest_pri >= 0)
         {
             /* Check for a thread at the given minimum priority level or higher */
+            /* 检查给定最低优先级或更高优先级的线程 */
             new_tcb = tcbDequeuePriority (&tcbReadyQ, (uint8_t)lowest_pri);
 
             /* If a thread was found, schedule it in */
+            /* 如果检查通过则调度线程 */
             if (new_tcb)
             {
                 /* Add the current thread to the ready queue */
+                /* 添加当前线程到就绪队列，并重新排序 */
                 (void)tcbEnqueuePriority (&tcbReadyQ, curr_tcb);
 
                 /* Switch to the new thread */
+                /* 切换线程 */
                 atomThreadSwitch (curr_tcb, new_tcb);
             }
         }
     }
 
     /* Exit critical section */
-    CRITICAL_END ();
+	/* 退出临界区 */
+    CRITICAL_END (); /* 恢复中断，由硬件相关的代码实现 */
 }
 
 
@@ -330,6 +397,7 @@ void atomSched (uint8_t timer_tick)
  *
  * @return None
  */
+/* 线程调度时的上下文切换 */
 static void atomThreadSwitch(ATOM_TCB *old_tcb, ATOM_TCB *new_tcb)
 {
     /**
@@ -337,6 +405,7 @@ static void atomThreadSwitch(ATOM_TCB *old_tcb, ATOM_TCB *new_tcb)
      * new thread is now ready to run so clear its suspend status in
      * preparation for it waking up.
      */
+    /* 清除挂起状态，为运行做准备 */
     new_tcb->suspended = FALSE;
 
     /**
@@ -345,12 +414,15 @@ static void atomThreadSwitch(ATOM_TCB *old_tcb, ATOM_TCB *new_tcb)
      * if a thread goes into suspend but is unsuspended again before
      * it is fully scheduled out.
      */
+    /* 如果新线程就是当前线程，则不用切换 */
     if (old_tcb != new_tcb)
     {
         /* Set the new currently-running thread pointer */
+        /* 设置当前运行的新线程指针 */
         curr_tcb = new_tcb;
 
         /* Call the architecture-specific context switch */
+        /* 上下文切换 */
         archContextSwitch (old_tcb, new_tcb);
     }
 }
@@ -384,9 +456,14 @@ static void atomThreadSwitch(ATOM_TCB *old_tcb, ATOM_TCB *new_tcb)
  * @retval ATOM_ERR_PARAM Bad parameters
  * @retval ATOM_ERR_QUEUE Error putting the thread on the ready queue
  */
+/* 创建并启动新线程。
+ * 将新线程放入就绪队列并尝试调度，如果优先级高于当前线程，则立即执行新线程。
+ * 可以进行堆栈检查。
+ * 参数有：线程指针、优先级、线程入口、参数、堆栈底部指针、堆栈大小、是否堆栈检查
+ */
 uint8_t atomThreadCreate (ATOM_TCB *tcb_ptr, uint8_t priority, void (*entry_point)(uint32_t), uint32_t entry_param, void *stack_bottom, uint32_t stack_size, uint8_t stack_check)
 {
-    CRITICAL_STORE;
+    CRITICAL_STORE; /* 读取中断寄存器 */
     uint8_t status;
     uint8_t *stack_top;
 #ifdef ATOM_STACK_CHECKING
@@ -403,6 +480,7 @@ uint8_t atomThreadCreate (ATOM_TCB *tcb_ptr, uint8_t priority, void (*entry_poin
     {
 
         /* Set up the TCB initial values */
+        /* 线程上下文初始值 */
         tcb_ptr->suspended = FALSE;
         tcb_ptr->terminated = FALSE;
         tcb_ptr->priority = priority;
@@ -415,6 +493,7 @@ uint8_t atomThreadCreate (ATOM_TCB *tcb_ptr, uint8_t priority, void (*entry_poin
          * not be necessary for all architecture ports if they put all of
          * this information in the initial thread stack.
          */
+        /* 将线程入口和参数存到上下文中 */
         tcb_ptr->entry_point = entry_point;
         tcb_ptr->entry_param = entry_param;
 
@@ -423,6 +502,7 @@ uint8_t atomThreadCreate (ATOM_TCB *tcb_ptr, uint8_t priority, void (*entry_poin
          * for the architecture. This may discard the top few bytes if the
          * stack size is not a multiple of the stack entry/alignment size.
          */
+        /* 栈顶地址字节对齐 */
         stack_top = (uint8_t *)stack_bottom + (stack_size & ~(STACK_ALIGN_SIZE - 1)) - STACK_ALIGN_SIZE;
 
         /**
@@ -431,6 +511,7 @@ uint8_t atomThreadCreate (ATOM_TCB *tcb_ptr, uint8_t priority, void (*entry_poin
          * and uses some additional storage in the TCB, but can be
          * compiled out if not desired.
          */
+        /* 堆栈检查，填充默认字节，会产生额外开销，可以选择关闭 */
 #ifdef ATOM_STACK_CHECKING
         /* Set up stack-checking if enabled for this thread */
         if (stack_check)
@@ -466,16 +547,19 @@ uint8_t atomThreadCreate (ATOM_TCB *tcb_ptr, uint8_t priority, void (*entry_poin
          * entry point, and any other necessary register values ready for
          * it to start running.
          */
+        /* 设置堆栈 */
         archThreadContextInit (tcb_ptr, stack_top, entry_point, entry_param);
 
         /* Protect access to the OS queue */
-        CRITICAL_START ();
+        CRITICAL_START (); /* 关中断 */
 
         /* Put this thread on the ready queue */
+        /* 将线程放入就绪队列 */
         if (tcbEnqueuePriority (&tcbReadyQ, tcb_ptr) != ATOM_OK)
         {
+            /* 加入队列失败 */
             /* Exit critical region */
-            CRITICAL_END ();
+            CRITICAL_END (); /* 恢复中断 */
 
             /* Queue-related error */
             status = ATOM_ERR_QUEUE;
@@ -483,12 +567,13 @@ uint8_t atomThreadCreate (ATOM_TCB *tcb_ptr, uint8_t priority, void (*entry_poin
         else
         {
             /* Exit critical region */
-            CRITICAL_END ();
+            CRITICAL_END (); /* 恢复中断 */
 
             /**
              * If the OS is started and we're in thread context, check if we
              * should be scheduled in now.
              */
+            /* 立即调度 */
             if ((atomOSStarted == TRUE) && atomCurrentContext())
                 atomSched (FALSE);
 
@@ -532,6 +617,7 @@ uint8_t atomThreadCreate (ATOM_TCB *tcb_ptr, uint8_t priority, void (*entry_poin
  * @retval ATOM_ERR_PARAM Bad parameters
  * @retval ATOM_ERR_QUEUE Error putting the thread on the ready queue
  */
+/* 返回堆栈已使用的字节数和空闲的字节数，这个函数有用但并不精确 */
 uint8_t atomThreadStackCheck (ATOM_TCB *tcb_ptr, uint32_t *used_bytes, uint32_t *free_bytes)
 {
     uint8_t status;
@@ -564,6 +650,7 @@ uint8_t atomThreadStackCheck (ATOM_TCB *tcb_ptr, uint32_t *used_bytes, uint32_t 
         *free_bytes = (uint32_t)i;
 
         /* Calculate used bytes using our knowledge of the stack size */
+        /* 计算已使用的堆栈大小 */
         *used_bytes = tcb_ptr->stack_size - *free_bytes;
 
         /* No error */
@@ -587,6 +674,15 @@ uint8_t atomThreadStackCheck (ATOM_TCB *tcb_ptr, uint32_t *used_bytes, uint32_t 
  *
  * @return None
  */
+/* 硬件定时器中断处理中的第2个函数，必须在上电后任何线程操作的中断处理之前首次被触发 */
+/* 在硬件相关的定时器中断中调用它，如：
+static void irq_timer_handler(void *t)
+{
+    atomIntEnter();
+    atomTimerTick();
+    atomIntExit();
+}
+*/
 void atomIntEnter (void)
 {
     /* Increment the interrupt count */
@@ -610,6 +706,8 @@ void atomIntEnter (void)
  *
  * @return None
  */
+/* 硬件定时器中断处理的第3个函数 */
+/* 定时器中断处理结束，在这里调度线程 */
 void atomIntExit (uint8_t timer_tick)
 {
     /* Decrement the interrupt count */
@@ -630,6 +728,7 @@ void atomIntExit (uint8_t timer_tick)
  *
  * @retval Pointer to current thread's TCB, NULL if in interrupt context
  */
+/* 获取当前线程上下文 */
 ATOM_TCB *atomCurrentContext (void)
 {
     /* Return the current thread's TCB or NULL if in interrupt context */
@@ -672,6 +771,16 @@ ATOM_TCB *atomCurrentContext (void)
  * @retval ATOM_OK Success
  * @retval ATOM_ERROR Initialisation error
  */
+/* 初始化操作系统。
+ * 应用程序应使用以下初始化顺序：
+ * 在调用任何atomthreads API之前调用atomOSInit()
+ * 安排硬件计时器定期调用atomTimerTick()
+ * 使用atomThreadCreate()创建一个或多个应用程序线程
+ * 使用atomOSStart()启动操作系统。此时
+ * 将启动创建的最高优先级的应用程序线程。
+ *
+ * 第一个线程恢复之前中断都会被禁用
+ */
 uint8_t atomOSInit (void *idle_thread_stack_bottom, uint32_t idle_thread_stack_size, uint8_t idle_thread_stack_check)
 {
     uint8_t status;
@@ -710,6 +819,7 @@ uint8_t atomOSInit (void *idle_thread_stack_bottom, uint32_t idle_thread_stack_s
  *
  * @return None
  */
+/* 系统初始化完成后运行优先级最高的线程，使用时中断会被禁用 */
 void atomOSStart (void)
 {
     ATOM_TCB *new_tcb;
@@ -735,6 +845,7 @@ void atomOSStart (void)
         curr_tcb = new_tcb;
 
         /* Restore and run the first thread */
+        /* 运行第一个线程 */
         archFirstThreadRestore (new_tcb);
 
         /* Never returns to here, execution shifts to new thread context */
@@ -760,6 +871,7 @@ void atomOSStart (void)
  *
  * @return None
  */
+/* 没有用户线程时的系统默认线程 */
 static void atomIdleThread (uint32_t param)
 {
     /* Compiler warning  */
@@ -796,6 +908,7 @@ static void atomIdleThread (uint32_t param)
  * @retval ATOM_OK Success
  * @retval ATOM_ERR_PARAM Bad parameters
  */
+/* 将线程上下文加入到队列中，会重新排序 */
 uint8_t tcbEnqueuePriority (ATOM_TCB **tcb_queue_ptr, ATOM_TCB *tcb_ptr)
 {
     uint8_t status;
@@ -810,6 +923,7 @@ uint8_t tcbEnqueuePriority (ATOM_TCB **tcb_queue_ptr, ATOM_TCB *tcb_ptr)
     else
     {
         /* Walk the list and enqueue at the end of the TCBs at this priority */
+        /* 进行排序 */
         prev_ptr = next_ptr = *tcb_queue_ptr;
         do
         {
@@ -881,6 +995,7 @@ uint8_t tcbEnqueuePriority (ATOM_TCB **tcb_queue_ptr, ATOM_TCB *tcb_ptr)
  *
  * @return Pointer to highest priority TCB on queue, or NULL if queue empty
  */
+/* 从队列中取出要运行的线程上下文 */
 ATOM_TCB *tcbDequeueHead (ATOM_TCB **tcb_queue_ptr)
 {
     ATOM_TCB *ret_ptr;
@@ -932,6 +1047,7 @@ ATOM_TCB *tcbDequeueHead (ATOM_TCB **tcb_queue_ptr)
  *
  * @return Pointer to the dequeued TCB, or NULL if entry wasn't found
  */
+/* 从队列中取出特定的线程上下文 */
 ATOM_TCB *tcbDequeueEntry (ATOM_TCB **tcb_queue_ptr, ATOM_TCB *tcb_ptr)
 {
     ATOM_TCB *ret_ptr, *prev_ptr, *next_ptr;
@@ -953,6 +1069,7 @@ ATOM_TCB *tcbDequeueEntry (ATOM_TCB **tcb_queue_ptr, ATOM_TCB *tcb_ptr)
     {
         ret_ptr = NULL;
         prev_ptr = next_ptr = *tcb_queue_ptr;
+        /* 进行查找 */
         while (next_ptr)
         {
             /* Is this entry the one we're looking for? */
@@ -1013,6 +1130,7 @@ ATOM_TCB *tcbDequeueEntry (ATOM_TCB **tcb_queue_ptr, ATOM_TCB *tcb_ptr)
  *
  * @return Pointer to the dequeued TCB, or NULL if none found within priority
  */
+/* 从队列中取出指定优先级的线程上下文 */
 ATOM_TCB *tcbDequeuePriority (ATOM_TCB **tcb_queue_ptr, uint8_t priority)
 {
     ATOM_TCB *ret_ptr;

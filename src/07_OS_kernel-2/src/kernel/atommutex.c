@@ -1,4 +1,9 @@
-/*
+/*******************************************************************************
+ * \brief	互斥功能
+ * \note	File format: UTF-8, 中文编码：UTF-8
+ * \author	注释作者：将狼才鲸
+ * \date	注释日期：2022-12-02
+ *******************************************************************************
  * Copyright (c) 2010, Kelvin Lawson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +34,14 @@
 
 
 /** 
+ *		线程的互斥功能。
+ *		可以选择是否阻塞，是否超时
+ *		可以在中断中调用
+ *		多个线程被阻塞时，按照线程优先级和FIFO顺序唤醒
+ *		互斥锁可以由同一个线程递归锁定，最多255次，有点类似于信号量
+ *		和信号量的区别是，被一个线程递归锁住的互斥锁，只有该线程才能释放，而信号量
+ * 可以被多个线程释放
+ *		当一个线程获取到互斥锁后，没有其它线程能继续获取到该锁
  * \file
  * Mutex library.
  *
@@ -108,6 +121,7 @@
 
 /* Local data types */
 
+/* 里面有两个队列，超时挂起队列和已经被锁上的队列 */
 typedef struct mutex_timer
 {
     ATOM_TCB *tcb_ptr;      /* Thread which is suspended with timeout */
@@ -189,6 +203,7 @@ uint8_t atomMutexCreate (ATOM_MUTEX *mutex)
  * @retval ATOM_ERR_QUEUE Problem putting a woken thread on the ready queue
  * @retval ATOM_ERR_TIMER Problem cancelling a timeout on a woken thread
  */
+/* 删除互斥锁对象，当前所有等待该互斥锁的线程都将被唤醒，然后继续竞争该资源 */
 uint8_t atomMutexDelete (ATOM_MUTEX *mutex)
 {
     uint8_t status;
@@ -214,6 +229,7 @@ uint8_t atomMutexDelete (ATOM_MUTEX *mutex)
             CRITICAL_START ();
 
             /* Check if any threads are suspended */
+            /* 循环唤醒所有等待该锁的线程 */
             tcb_ptr = tcbDequeueHead (&mutex->suspQ);
 
             /* A thread is suspended on the mutex */
@@ -336,6 +352,7 @@ uint8_t atomMutexDelete (ATOM_MUTEX *mutex)
  * @retval ATOM_ERR_TIMER Problem registering the timeout
  * @retval ATOM_ERR_OVF The recursive lock count would have overflowed (>255)
  */
+/* 尝试获取到互斥锁 */
 uint8_t atomMutexGet (ATOM_MUTEX *mutex, int32_t timeout)
 {
     CRITICAL_STORE;
@@ -542,6 +559,7 @@ uint8_t atomMutexGet (ATOM_MUTEX *mutex, int32_t timeout)
  * @retval ATOM_ERR_TIMER Problem cancelling a timeout for a woken thread
  * @retval ATOM_ERR_OWNERSHIP Attempt to unlock mutex not owned by this thread
  */
+/* 释放一次互斥锁 */
 uint8_t atomMutexPut (ATOM_MUTEX * mutex)
 {
     uint8_t status;
@@ -680,6 +698,7 @@ uint8_t atomMutexPut (ATOM_MUTEX * mutex)
  *
  * @param[in] cb_data Pointer to a MUTEX_TIMER object
  */
+/* 用于软定时器的回调函数 */
 static void atomMutexTimerCallback (POINTER cb_data)
 {
     MUTEX_TIMER *timer_data_ptr;

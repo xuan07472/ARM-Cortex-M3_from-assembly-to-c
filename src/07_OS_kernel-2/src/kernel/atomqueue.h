@@ -33,19 +33,30 @@
 extern "C" {
 #endif
 
+/* 队列头，里面有两个挂起相关的队列，一个消息环形缓存 */
 typedef struct atom_queue
 {
+	/* 2个挂起相关的线程队列 */
+	/* 等待发送消息的线程队列，有消息发送时就唤醒一个线程 */
     ATOM_TCB *  putSuspQ;       /* Queue of threads waiting to send */
+	/* 等待接收消息的线程队列，有消息接收时就唤醒一个线程 */
     ATOM_TCB *  getSuspQ;       /* Queue of threads waiting to receive */
+	/* 队列中的消息数据 */
     uint8_t *   buff_ptr;       /* Pointer to queue data area */
+	/* 每条消息的大小 */
     uint32_t    unit_size;      /* Size of each message */
+	/* 消息总数 */
     uint32_t    max_num_msgs;   /* Max number of storable messages */
+	/* 队列插入、删除位置 */
     uint32_t    insert_index;   /* Next byte index to insert into */
     uint32_t    remove_index;   /* Next byte index to remove from */
+	/* 已有消息数量 */
     uint32_t    num_msgs_stored;/* Number of messages stored */
 } ATOM_QUEUE;
 
+/* 初始化队列头 */
 extern uint8_t atomQueueCreate (ATOM_QUEUE *qptr, uint8_t *buff_ptr, uint32_t unit_size, uint32_t max_num_msgs);
+/* 删除队列，该队列中的所有线程都会被转成就绪状态 */
 extern uint8_t atomQueueDelete (ATOM_QUEUE *qptr);
 extern uint8_t atomQueueGet (ATOM_QUEUE *qptr, int32_t timeout, uint8_t *msgptr);
 extern uint8_t atomQueuePut (ATOM_QUEUE *qptr, int32_t timeout, uint8_t *msgptr);

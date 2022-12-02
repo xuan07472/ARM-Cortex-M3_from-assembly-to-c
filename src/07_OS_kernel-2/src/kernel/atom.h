@@ -1,6 +1,16 @@
 /*
+/*******************************************************************************
+ * \brief	线程管理的头文件
+ * \details	实现线程创建、挂起、切换、销毁等功能；一些线程管理的基础概念有：时间片
+ *			轮转、线程优先级、线程死锁、优先级继承、优先级天花板、任务阻塞。
+ *			输出的函数接口在atom.h中，创建线程要包含这个头文件。
+ * \note	File format: UTF-8, 中文编码：UTF-8
+ * \author	注释作者：将狼才鲸
+ * \date	注释日期：2022-12-01
+ *******************************************************************************
  * Copyright (c) 2010, Kelvin Lawson. All rights reserved.
  *
+ * 以下都是版权声明：
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,14 +44,15 @@
 extern "C" {
 #endif
 
-#include "atomtimer.h"
-#include "atomport.h"
+#include "atomtimer.h"  /* 线程管理模块内部的头文件 */
+#include "atomport.h"   /* 系统移植时需要提供的头文件 */
 
 /* Data types */
 
 /* Forward declaration */
 struct atom_tcb;
 
+/* 线程上下文，自身也是一个队列头，或者某个队列中的一个元素 */
 typedef struct atom_tcb
 {
     /*
@@ -56,6 +67,7 @@ typedef struct atom_tcb
 #endif
 
     /* Thread priority (0-255) */
+    /* 线程优先级 */
     uint8_t priority;
 
     /* Thread entry point and parameter */
@@ -67,9 +79,11 @@ typedef struct atom_tcb
     struct atom_tcb *next_tcb;    /* Next TCB in doubly-linked list */
 
     /* Suspension data */
+    /* 线程是否已暂停 */
     uint8_t suspended;            /* TRUE if task is currently suspended */
     uint8_t suspend_wake_status;  /* Status returned to woken suspend calls */
     ATOM_TIMER *suspend_timo_cb;  /* Callback registered for suspension timeouts */
+    /* 线程是否已停止 */
     uint8_t terminated;           /* TRUE if task is being terminated (run to completion) */
 
     /* Details used if thread stack-checking is required */
@@ -82,7 +96,7 @@ typedef struct atom_tcb
 
 
 /* Global data */
-extern ATOM_TCB *tcbReadyQ;
+extern ATOM_TCB *tcbReadyQ; /* 会在整个线程管理模块中使用 */
 extern uint8_t atomOSStarted;
 
 
@@ -115,8 +129,8 @@ extern void atomOSStart (void);
 
 extern void atomSched (uint8_t timer_tick);
 
-extern void atomIntEnter (void);
-extern void atomIntExit (uint8_t timer_tick);
+extern void atomIntEnter (void); /* 需要在操作系统移植时调用 */
+extern void atomIntExit (uint8_t timer_tick); /* 需要在操作系统移植时调用 */
 
 extern uint8_t tcbEnqueuePriority (ATOM_TCB **tcb_queue_ptr, ATOM_TCB *tcb_ptr);
 extern ATOM_TCB *tcbDequeueHead (ATOM_TCB **tcb_queue_ptr);
@@ -128,11 +142,12 @@ extern ATOM_TCB *atomCurrentContext (void);
 extern uint8_t atomThreadCreate (ATOM_TCB *tcb_ptr, uint8_t priority, void (*entry_point)(uint32_t), uint32_t entry_param, void *stack_bottom, uint32_t stack_size, uint8_t stack_check);
 extern uint8_t atomThreadStackCheck (ATOM_TCB *tcb_ptr, uint32_t *used_bytes, uint32_t *free_bytes);
 
+/* 这3个函数需要系统移植的atomport.c/h文件中实现 */
 extern void archContextSwitch (ATOM_TCB *old_tcb_ptr, ATOM_TCB *new_tcb_ptr);
 extern void archThreadContextInit (ATOM_TCB *tcb_ptr, void *stack_top, void (*entry_point)(uint32_t), uint32_t entry_param);
 extern void archFirstThreadRestore(ATOM_TCB *new_tcb_ptr);
 
-extern void atomTimerTick (void);
+extern void atomTimerTick (void); /* 需要在操作系统移植时调用 */
 
 #ifdef __cplusplus
 }

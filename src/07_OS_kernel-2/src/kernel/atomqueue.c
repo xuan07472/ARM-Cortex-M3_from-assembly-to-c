@@ -1,6 +1,13 @@
-/*
+/*******************************************************************************
+ * \brief	线程队列模块
+ * \details	就绪线程队列、定时挂起线程队列会用到
+ * \note	File format: UTF-8, 中文编码：UTF-8
+ * \author	注释作者：将狼才鲸
+ * \date	注释日期：2022-12-02
+ *******************************************************************************
  * Copyright (c) 2010, Kelvin Lawson. All rights reserved.
  *
+ * 以下都是版权声明：
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -29,6 +36,16 @@
 
 
 /** 
+ * 队列和消息传递
+ * 能选择是否阻塞
+ * 可以在中断里面调用
+ * 挂起的队列中按照优先级恢复，同样的优先级按照先入先出恢复
+ * 消息队列的大小可以配置
+ * 如果删除整个队列，则这个队列中的所有线程会自动被唤醒
+ *
+ *		队列通过atomQueueCreate()创建，后续才能通过atomQueueGet()和atomQueuiPut()向队列
+ * 添加和删除线程
+ *
  * \file
  * Queue library.
  *
@@ -102,8 +119,11 @@
 
 typedef struct queue_timer
 {
+	/* 线程上下文，里面包含了挂起的时间 */
     ATOM_TCB   *tcb_ptr;    /* Thread which is suspended with timeout */
+	/* 线程要加入的队列基础元素 */
     ATOM_QUEUE *queue_ptr;  /* Queue the thread is interested in */
+	/* 上一级的挂起线程队列 */
     ATOM_TCB   **suspQ;     /* TCB queue which thread is suspended on */
 } QUEUE_TIMER;
 
@@ -142,6 +162,7 @@ static void atomQueueTimerCallback (POINTER cb_data);
  * @retval ATOM_OK Success
  * @retval ATOM_ERR_PARAM Bad parameters
  */
+/* 初始化队列，指定存储空间、消息总数、每条消息大小，使用固定大小的消息 */
 uint8_t atomQueueCreate (ATOM_QUEUE *qptr, uint8_t *buff_ptr, uint32_t unit_size, uint32_t max_num_msgs)
 {
     uint8_t status;
@@ -201,6 +222,10 @@ uint8_t atomQueueCreate (ATOM_QUEUE *qptr, uint8_t *buff_ptr, uint32_t unit_size
  * @retval ATOM_ERR_QUEUE Problem putting a woken thread on the ready queue
  * @retval ATOM_ERR_TIMER Problem cancelling a timeout on a woken thread
  */
+/* 删除整个队列，队列中当前挂起的任何线程都将被唤醒；
+ * 能在中断中调用，但因为可能有循环，所以执行的时间不确定，有可能会占时太长
+ * 导致丢中断
+ */
 uint8_t atomQueueDelete (ATOM_QUEUE *qptr)
 {
     uint8_t status;
@@ -223,7 +248,7 @@ uint8_t atomQueueDelete (ATOM_QUEUE *qptr)
         while (1)
         {
             /* Enter critical region */
-            CRITICAL_START ();
+            CRITICAL_START (); /* 关闭中断 */
 
             /* Check if any threads are suspended */
             if (((tcb_ptr = tcbDequeueHead (&qptr->getSuspQ)) != NULL)
@@ -235,6 +260,7 @@ uint8_t atomQueueDelete (ATOM_QUEUE *qptr)
                 tcb_ptr->suspend_wake_status = ATOM_ERR_DELETED;
 
                 /* Put the thread on the ready queue */
+				/* 将线程放进挂起队列 */
                 if (tcbEnqueuePriority (&tcbReadyQ, tcb_ptr) != ATOM_OK)
                 {
                     /* Exit critical region */
@@ -249,6 +275,7 @@ uint8_t atomQueueDelete (ATOM_QUEUE *qptr)
                 if (tcb_ptr->suspend_timo_cb)
                 {
                     /* Cancel the callback */
+					/* 取消软定时器队列中的该软定时器 */
                     if (atomTimerCancel (tcb_ptr->suspend_timo_cb) != ATOM_OK)
                     {
                         /* Exit critical region */
@@ -332,6 +359,10 @@ uint8_t atomQueueDelete (ATOM_QUEUE *qptr)
  * @retval ATOM_ERR_PARAM Bad parameter
  * @retval ATOM_ERR_QUEUE Problem putting the thread on the suspend queue
  * @retval ATOM_ERR_TIMER Problem registering the timeout
+ */
+/* 从队列中获取消息，有多个消息时先入先出
+ * 可以阻塞：直到有消息可用时才退出；有消息可用时，或者超时已到才退出；
+ *			没消息时立即返回
  */
 uint8_t atomQueueGet (ATOM_QUEUE *qptr, int32_t timeout, uint8_t *msgptr)
 {
@@ -539,6 +570,7 @@ uint8_t atomQueueGet (ATOM_QUEUE *qptr, int32_t timeout, uint8_t *msgptr)
  * @retval ATOM_ERR_QUEUE Problem putting the thread on the suspend queue
  * @retval ATOM_ERR_TIMER Problem registering the timeout
  */
+/* 将消息放入队列，消息已满时可以阻塞、超时或立即返回 */
 uint8_t atomQueuePut (ATOM_QUEUE *qptr, int32_t timeout, uint8_t *msgptr)
 {
     CRITICAL_STORE;
@@ -584,6 +616,7 @@ uint8_t atomQueuePut (ATOM_QUEUE *qptr, int32_t timeout, uint8_t *msgptr)
                         /* Register a timer callback if requested */
                         if (timeout)
                         {
+							/* 如果是阻塞的则定义定时器回调 */
                             /**
                              * Fill out the data needed by the callback to
                              * wake us up.
@@ -722,6 +755,7 @@ uint8_t atomQueuePut (ATOM_QUEUE *qptr, int32_t timeout, uint8_t *msgptr)
  *
  * @param[in] cb_data Pointer to a QUEUE_TIMER object
  */
+ /* 注册软定时器时的回调函数 */
 static void atomQueueTimerCallback (POINTER cb_data)
 {
     QUEUE_TIMER *timer_data_ptr;
@@ -737,6 +771,7 @@ static void atomQueueTimerCallback (POINTER cb_data)
         CRITICAL_START ();
 
         /* Set status to indicate to the waiting thread that it timed out */
+		/* 赋值超时标志 */
         timer_data_ptr->tcb_ptr->suspend_wake_status = ATOM_TIMEOUT;
 
         /* Flag as no timeout registered */
@@ -749,6 +784,7 @@ static void atomQueueTimerCallback (POINTER cb_data)
         (void)tcbDequeueEntry (timer_data_ptr->suspQ, timer_data_ptr->tcb_ptr);
 
         /* Put the thread on the ready queue */
+		/* 线程由挂起恢复到就绪 */
         (void)tcbEnqueuePriority (&tcbReadyQ, timer_data_ptr->tcb_ptr);
 
         /* Exit critical region */
@@ -784,6 +820,7 @@ static void atomQueueTimerCallback (POINTER cb_data)
  * @retval ATOM_ERR_QUEUE Problem putting a thread on the ready queue
  * @retval ATOM_ERR_TIMER Problem cancelling a timeout
  */
+/* 从队列中删除消息 */
 static uint8_t queue_remove (ATOM_QUEUE *qptr, uint8_t* msgptr)
 {
     uint8_t status;
@@ -797,6 +834,7 @@ static uint8_t queue_remove (ATOM_QUEUE *qptr, uint8_t* msgptr)
     }
     else
     {
+		/* 从环形缓存中读取消息 */
         /* There is a message on the queue, copy it out */
         memcpy (msgptr, (qptr->buff_ptr + qptr->remove_index), qptr->unit_size);
         qptr->remove_index += qptr->unit_size;
@@ -878,6 +916,7 @@ static uint8_t queue_remove (ATOM_QUEUE *qptr, uint8_t* msgptr)
  * @retval ATOM_ERR_QUEUE Problem putting a thread on the ready queue
  * @retval ATOM_ERR_TIMER Problem cancelling a timeout
  */
+/* 将消息插入到队列中的环形缓存 */
 static uint8_t queue_insert (ATOM_QUEUE *qptr, uint8_t* msgptr)
 {
     uint8_t status;

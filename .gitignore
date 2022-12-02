@@ -10,4 +10,5 @@ EventRecorderStub.scvd
 *.BAT
 RTE/
 DebugConfig/
+.vscode/
 

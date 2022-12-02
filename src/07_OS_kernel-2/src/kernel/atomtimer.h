@@ -1,6 +1,13 @@
-/*
+/*******************************************************************************
+ * \brief	线程软定时器队列和系统滴答的源文件
+ * \details	供挂起线程的时间片轮转，也供互斥和信号量的超时等待
+ * \note	File format: UTF-8, 中文编码：UTF-8
+ * \author	注释作者：将狼才鲸
+ * \date	注释日期：2022-12-02
+ *******************************************************************************
  * Copyright (c) 2010, Kelvin Lawson. All rights reserved.
  *
+ * 以下都是版权声明：
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,7 +41,7 @@
 extern "C" {
 #endif
 
-#include "atomport.h"
+#include "atomport.h"   /* 系统移植时需要提供的头文件 */
 
 
 /* Callback function prototype */
@@ -46,7 +53,9 @@ typedef void ( * TIMER_CB_FUNC ) ( POINTER cb_data ) ;
 typedef struct atom_timer
 {
     TIMER_CB_FUNC   cb_func;    /* Callback function */
+	/* 退出挂起时执行的操作 */
     POINTER	        cb_data;    /* Pointer to callback parameter/data */
+	/* 线程挂起的时长 */
     uint32_t	    cb_ticks;   /* Ticks until callback */
 
 	/* Internal data */
@@ -56,10 +65,15 @@ typedef struct atom_timer
 
 /* Function prototypes */
 
+/* 挂起一个线程一段时间 */
 extern uint8_t atomTimerRegister (ATOM_TIMER *timer_ptr);
+/* 不等线程的时间到，直接恢复该线程 */
 extern uint8_t atomTimerCancel (ATOM_TIMER *timer_ptr);
+/* 将当前线程挂起多长时间 */
 extern uint8_t atomTimerDelay (uint32_t ticks);
+/* 获取操作系统滴答 */
 extern uint32_t atomTimeGet (void);
+/* 测试时使用 */
 extern void atomTimeSet (uint32_t new_time);
 
 #ifdef __cplusplus

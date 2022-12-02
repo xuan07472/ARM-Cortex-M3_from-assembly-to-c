@@ -33,10 +33,14 @@
 extern "C" {
 #endif
 
+/* 一个互斥元素 */
 typedef struct atom_mutex
 {
+    /* 在同一个锁上被挂机的线程队列（多个线程同时获取同一个临界资源时） */
     ATOM_TCB *  suspQ;  /* Queue of threads suspended on this mutex */
+    /* 上锁的所有者线程 */
     ATOM_TCB *  owner;  /* Thread which currently owns the lock */
+    /* 同一个线程的递归上锁次数 */
     uint8_t     count;  /* Recursive count of locks by the owner  */
 } ATOM_MUTEX;
 
